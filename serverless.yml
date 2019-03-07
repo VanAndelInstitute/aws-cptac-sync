@@ -1,0 +1,90 @@
+service: cptac-sync
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-2
+  profile: vai
+  tags:
+    costcenter: pbc
+  stackTags:
+    costcenter: pbc
+  deploymentBucket:
+    tags:
+      costcenter: pbc
+  environment:
+    BSI_BASE_URL: 'https://rest-mirror.bsisystems.com/api/rest/'
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:*:secret:bsi-cptac-service-SGLi6d'
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:service}-${opt:stage, self:provider.stage}-*"
+package:
+  exclude:
+    - README.md
+    - .gitignore
+
+functions:
+  bsi-syncreceipts:
+    handler: handlers.syncreceipts
+    timeout: 600
+    environment:
+      BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
+      LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
+    events:
+      - name: ${self:service}-${opt:stage, self:provider.stage}-timer
+      - schedule: cron(0/5 * * * ? *)
+  # getreceipt:
+  #   handler: handlers.getreceipt
+  #   environment:
+  #     BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
+  #   events:
+  #     - http:
+  #         path: receipt/{id}
+  #         method: get
+  #         request:
+  #           parameters:
+  #             paths:
+  #               id: true
+  #         cors: true
+
+resources:
+  Resources:
+    shipmentreceipts:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${opt:stage, self:provider.stage}-receipts
+        AttributeDefinitions:
+          - AttributeName: shipmentId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: shipmentId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        Tags:
+          - Key: costcenter
+            Value: pbc
+    latestrecord:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${opt:stage, self:provider.stage}-latest-record
+        AttributeDefinitions:
+          - AttributeName: topic
+            AttributeType: S
+        KeySchema:
+          - AttributeName: topic
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        Tags:
+          - Key: costcenter
+            Value: pbc

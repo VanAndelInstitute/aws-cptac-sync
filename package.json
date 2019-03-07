@@ -1,0 +1,17 @@
+{
+  "name": "aws-cptac-sync",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VanAndelInstitute/aws-cptac-sync.git"
+  },
+  "dependencies": {
+    "dateformat": "^3.0.3",
+    "request": "^2.87.0"
+  },
+  "bugs": {
+    "url": "https://github.com/VanAndelInstitute/aws-cptac-sync/issues"
+  },
+  "homepage": "https://github.com/VanAndelInstitute/aws-cptac-sync#readme"
+}
