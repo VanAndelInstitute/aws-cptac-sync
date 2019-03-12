@@ -1,0 +1,17 @@
+Resources:
+  ShipmentReceipts:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:service}-${opt:stage, self:provider.stage}-receipts
+      AttributeDefinitions:
+        - AttributeName: shipmentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shipmentId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      Tags:
+        - Key: costcenter
+          Value: pbc

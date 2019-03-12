@@ -22,6 +22,8 @@ provider:
       Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:*:secret:bsi-cptac-service-SGLi6d'
     - Effect: Allow
       Action:
+        - dynamodb:ListStreams
+        - dynamodb:DescribeTable
         - dynamodb:Query
         - dynamodb:Scan
         - dynamodb:GetItem
@@ -35,8 +37,8 @@ package:
     - .gitignore
 
 functions:
-  bsi-syncreceipts:
-    handler: handlers.syncreceipts
+  pull-recent-receipts:
+    handler: handlers.pullrecentreceipts
     timeout: 600
     environment:
       BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
@@ -44,47 +46,49 @@ functions:
     events:
       - name: ${self:service}-${opt:stage, self:provider.stage}-timer
       - schedule: cron(0/5 * * * ? *)
-  # getreceipt:
-  #   handler: handlers.getreceipt
-  #   environment:
-  #     BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
-  #   events:
-  #     - http:
-  #         path: receipt/{id}
-  #         method: get
-  #         request:
-  #           parameters:
-  #             paths:
-  #               id: true
-  #         cors: true
+  sync-receipt:
+    handler: handlers.syncreceipt
+    timeout: 120
+    environment:
+      BSI_RECEIPTS_SYNC: ${self:service}-${opt:stage, self:provider.stage}-receipts-sync
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          startingPosition: LATEST
+          arn:
+            Fn::GetAtt:
+              - ShipmentReceipts
+              - StreamArn
+  get-receipt:
+    handler: handlers.getreceipt
+    environment:
+      BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
+    events:
+      - http:
+          path: receipt/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
 
 resources:
-  Resources:
-    shipmentreceipts:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}-${opt:stage, self:provider.stage}-receipts
-        AttributeDefinitions:
-          - AttributeName: shipmentId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: shipmentId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        Tags:
-          - Key: costcenter
-            Value: pbc
-    latestrecord:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}-${opt:stage, self:provider.stage}-latest-record
-        AttributeDefinitions:
-          - AttributeName: topic
-            AttributeType: S
-        KeySchema:
-          - AttributeName: topic
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        Tags:
-          - Key: costcenter
-            Value: pbc
+  # DynamoDB
+  - ${file(sls-resources/dynamodb-shipment-receipts.yml)}
+  - ${file(sls-resources/dynamodb-shipment-receipts-sync.yml)}
+  - ${file(sls-resources/dynamodb-latest-record.yml)}
+  # Cognito
+  - ${file(sls-resources/cognito-user-pool.yml)}
+  - ${file(sls-resources/cognito-identity-pool.yml)}
+  # S3
+  # TODO: Add www.domain.com redirect to domain.com
+
+plugins:
+  - serverless-finch
+
+custom:
+  client:
+    bucketName: ${self:service}-${opt:stage, self:provider.stage}.aws.vai.org
