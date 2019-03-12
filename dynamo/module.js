@@ -26,6 +26,10 @@ var dynamoModule = (function() {
     }
 
     return {
+        toJson: function(input) {
+            return AWS.DynamoDB.Converter.unmarshall(input, { convertEmptyValues: true });
+        },
+
         getLatest: function(topic) {
             return new Promise(async (resolve, reject) => {
                 var lastUpdated = await docClient.get({
@@ -64,6 +68,13 @@ var dynamoModule = (function() {
             return docClient.get({
                 TableName: process.env.BSI_RECEIPTS,
                 Key: { shipmentId: shipmentId }
+            }).promise();
+        },
+
+        updateSync: function(syncData) {
+            return docClient.put({
+                TableName: process.env.BSI_RECEIPTS_SYNC,
+                Item: syncData
             }).promise();
         },
 

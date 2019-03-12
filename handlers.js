@@ -1,29 +1,23 @@
 'use strict';
 
-const bsi = require('./bsi/module');
-const dynamo = require('./dynamo/module');
+const shipmentReceipts = require('./shipment-receipts');
 
-module.exports.syncreceipts = async (event, context) => {
-    await bsi.login();
-    
-    var lastUpdated = await dynamo.getLatest('Shipment Receipt');
+module.exports.pullrecentreceipts = (event, context) => {
+    shipmentReceipts.pullRecentChanges();
+};
 
-    var receipts = await bsi.getNewReceipts(lastUpdated.lastModified);
-    var filteredReceipts = await dynamo.filterReceipts(receipts.rows);
-    await Promise.all(filteredReceipts.map(async shipmentId => {
-        var receipt = await bsi.getReceipt(shipmentId);
-        if (lastUpdated.lastModified < receipt.lastModified) {
-            lastUpdated.lastModified = receipt.lastModified;
-        }
-        await dynamo.updateReceipt(receipt);
-    }));
+module.exports.rebuildreceipt = (event, context) => {
+    shipmentReceipts.rebuildReceipt(event.pathParameters.id);
+};
 
-    await dynamo.updateLatest(lastUpdated);
-    await bsi.logoff();
+module.exports.syncreceipt = (event, context) => {
+    event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
+        shipmentReceipts.syncReceipt(record);
+    });
 };
 
 module.exports.getreceipt = async (event, context) => {
-    var receipt = await dynamo.getReceipt(event.pathParameters.id);
+    var receipt = await shipmentReceipts.getReceipt(event.pathParameters.id);
     return {
         statusCode: 200,
         headers: {
