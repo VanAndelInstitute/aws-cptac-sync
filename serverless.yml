@@ -33,6 +33,7 @@ provider:
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:service}-${opt:stage, self:provider.stage}-*"
 package:
   exclude:
+    - client/**
     - README.md
     - .gitignore
 
@@ -45,7 +46,7 @@ functions:
       LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
     events:
       - name: ${self:service}-${opt:stage, self:provider.stage}-timer
-      - schedule: cron(0/5 * * * ? *)
+      - schedule: cron(0 6-19 * * ? *)
   sync-receipt:
     handler: handlers.syncreceipt
     timeout: 120
@@ -92,3 +93,4 @@ plugins:
 custom:
   client:
     bucketName: ${self:service}-${opt:stage, self:provider.stage}.aws.vai.org
+    distributionFolder: client/build
