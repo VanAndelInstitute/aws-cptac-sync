@@ -4,85 +4,121 @@ const AWS = require('aws-sdk');
 
 const docClient  = new AWS.DynamoDB.DocumentClient({ convertEmptyValues: true });
 
-var dynamoModule = (function() {
-    function checkReceipt(shipmentId, lastModified) {
-        return new Promise(async (resolve, reject) => {
-            docClient.get({
-                TableName: process.env.BSI_RECEIPTS,
-                Key: {
-                    'shipmentId': shipmentId
-                },
-                AttributesToGet: ['shipmentId', 'lastModified']
-            }).promise()
-            .then(receipt => {
-                if (Object.entries(receipt).length === 0 && receipt.constructor === Object) {
-                    resolve(shipmentId);
-                } else if (receipt.Item.lastModified != lastModified.replace(' ', 'T')) {
-                    resolve(shipmentId);
-                }
-                resolve();
+var dynamoModule = (() => {
+    var receipt = {
+        check: (shipmentId, lastModified) => {
+            return new Promise(async (resolve, reject) => {
+                docClient.get({
+                    TableName: process.env.BSI_RECEIPTS,
+                    Key: {
+                        'shipmentId': shipmentId
+                    },
+                    AttributesToGet: ['shipmentId', 'lastModified']
+                }).promise()
+                .then(receipt => {
+                    if (Object.entries(receipt).length === 0 && receipt.constructor === Object) {
+                        resolve(shipmentId);
+                    } else if (receipt.Item.lastModified != lastModified.replace(' ', 'T')) {
+                        resolve(shipmentId);
+                    }
+                    resolve();
+                });
             });
-        });
+        }
     }
 
     return {
-        toJson: function(input) {
+        toJson: (input) => {
             return AWS.DynamoDB.Converter.unmarshall(input, { convertEmptyValues: true });
         },
 
-        getLatest: function(topic) {
+        getLatest: (topic) => {
             return new Promise(async (resolve, reject) => {
                 var lastUpdated = await docClient.get({
                     TableName: process.env.LATEST_RECORD,
                     Key: { topic: topic }
                 }).promise();
                 if (Object.entries(lastUpdated).length === 0 && lastUpdated.constructor === Object) {
-                    resolve({topic: topic, lastModified: '01-01-2019 00:00:00.000'});
+                    resolve({topic: topic, lastModified: '08-29-2019 00:00:00.000'});
                 } else {
                     resolve(lastUpdated.Item);
                 }
             });
         },
 
-        filterReceipts: function(shipments) {
-            return new Promise(async (resolve, reject) => {
-                var promises = [];
-                shipments.forEach(shipment => {
-                    promises.push(checkReceipt(shipment[0], shipment[1]));
-                });
-                Promise.all(promises)
-                .then(receipts => {
-                    resolve([].concat.apply([], receipts.filter(receipt => receipt)));
-                });
-            });
-        },
-
-        updateReceipt: function(shipment) {
-            return docClient.put({
-                TableName: process.env.BSI_RECEIPTS,
-                Item: shipment
-            }).promise();
-        },
-
-        getReceipt: function(shipmentId) {
-            return docClient.get({
-                TableName: process.env.BSI_RECEIPTS,
-                Key: { shipmentId: shipmentId }
-            }).promise();
-        },
-
-        updateSync: function(syncData) {
-            return docClient.put({
-                TableName: process.env.BSI_RECEIPTS_SYNC,
-                Item: syncData
-            }).promise();
-        },
-
-        updateLatest: function(lastUpdated) {
+        updateLatest: (lastUpdated) => {
             return docClient.put({
                 TableName: process.env.LATEST_RECORD,
                 Item: lastUpdated
             }).promise();
+        },
+
+        receipts: {
+            filter: (shipments) => {
+                return new Promise(async (resolve, reject) => {
+                    var promises = [];
+                    shipments.forEach(shipment => {
+                        promises.push(receipt.check(shipment[0], shipment[1]));
+                    });
+                    Promise.all(promises)
+                    .then(receipts => {
+                        resolve([].concat.apply([], receipts.filter(receipt => receipt)));
+                    });
+                });
+            },
+
+            update: (shipment) => {
+                return docClient.put({
+                    TableName: process.env.BSI_RECEIPTS,
+                    Item: shipment
+                }).promise();
+            },
+
+            get: (shipmentId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_RECEIPTS,
+                    Key: { shipmentId: shipmentId }
+                }).promise();
+            },
+
+            updateSync: (syncData) => {
+                return docClient.put({
+                    TableName: process.env.BSI_RECEIPTS_SYNC,
+                    Item: syncData
+                }).promise();
+            }
+        },
+        
+        molecularqcs: {
+            update: (molecularqc) => {
+                return docClient.put({
+                    TableName: process.env.BSI_MOLECULARQCS,
+                    Item: molecularqc
+                }).promise();
+            },
+
+            get: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_MOLECULARQCS,
+                    Key: { caseId: caseId }
+                }).promise();
+            },
+        },
+
+        iscans: {
+            update: (iscan) => {
+                return docClient.put({
+                    TableName: process.env.BSI_ISCANS,
+                    Item: iscan
+                }).promise();
+            },
+
+            get: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_ISCANS,
+                    Key: { caseId: caseId }
+                }).promise();
+            },
         }
     };
 })();

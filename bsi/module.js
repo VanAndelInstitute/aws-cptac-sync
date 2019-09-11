@@ -3,25 +3,40 @@
 const bsiRequest = require('./request');
 const bsiParse = require('./parse');
 
-const bsiModule = (function() {
+const bsiModule = (() => {
     return {
-        login: function() {
+        login: () => {
             return bsiRequest.login();
         },
 
-        getNewReceipts: function(lastModified) {
-            return bsiRequest.getNewReceipts(lastModified);
-        },
-
-        getReceipt: function(shipmentId) {
-            return bsiRequest.getReceipt(shipmentId)
-            .then(results => {
-                return bsiParse.parseShipmentReport(results);
-            });
-        },
-
-        logoff: function() {
+        logoff: () => {
             return bsiRequest.logoff();
+        },
+
+        receipts: {
+            getUpdated: (lastModified) => {
+                return bsiRequest.receipts.getUpdated(lastModified);
+            },
+
+            get: (shipmentId) => {
+                return bsiRequest.receipts.get(shipmentId)
+                .then(results => {
+                    return bsiParse.receipts.parseReport(results);
+                });
+            }
+        },
+
+        cases: {
+            getUpdated: (lastModified) => {
+                return bsiRequest.cases.getUpdated(lastModified);
+            },
+
+            get: (caseId) => {
+                return bsiRequest.cases.get(caseId)
+                .then(results => {
+                    return bsiParse.cases.parseReport(results);
+                });
+            }
         }
     };
 })();

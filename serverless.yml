@@ -2,7 +2,7 @@ service: cptac-sync
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs10.x
   stage: dev
   region: us-east-2
   profile: vai
@@ -15,6 +15,10 @@ provider:
       costcenter: pbc
   environment:
     BSI_BASE_URL: 'https://rest-mirror.bsisystems.com/api/rest/'
+    BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
+    BSI_ISCANS: ${self:service}-${opt:stage, self:provider.stage}-iscans
+    BSI_MOLECULARQCS: ${self:service}-${opt:stage, self:provider.stage}-molecularqcs
+    LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -44,14 +48,12 @@ functions:
     environment:
       BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
       LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
-    events:
-      - name: ${self:service}-${opt:stage, self:provider.stage}-timer
-      - schedule: cron(0 6-19 * * ? *)
+    # events:
+    #   - name: ${self:service}-${opt:stage, self:provider.stage}-receipts-timer
+    #   - schedule: cron(0 6-19 * * ? *)
   sync-receipt:
     handler: handlers.syncreceipt
     timeout: 120
-    environment:
-      BSI_RECEIPTS_SYNC: ${self:service}-${opt:stage, self:provider.stage}-receipts-sync
     events:
       - stream:
           type: dynamodb
@@ -63,11 +65,63 @@ functions:
               - StreamArn
   get-receipt:
     handler: handlers.getreceipt
-    environment:
-      BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
     events:
       - http:
           path: receipt/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  pull-recent-cases:
+    handler: handlers.pullrecentcases
+    timeout: 600
+    # events:
+    #   - name: ${self:service}-${opt:stage, self:provider.stage}-iscan-timer
+    #   - schedule: cron(0 6-19 * * ? *)
+  sync-iscan:
+    handler: handlers.synciscan
+    timeout: 120
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          startingPosition: LATEST
+          arn:
+            Fn::GetAtt:
+              - Iscans
+              - StreamArn
+  get-iscan:
+    handler: handlers.getiscan
+    events:
+      - http:
+          path: iscan/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  sync-molecularqc:
+    handler: handlers.synciscan
+    timeout: 120
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          startingPosition: LATEST
+          arn:
+            Fn::GetAtt:
+              - Iscans
+              - StreamArn
+  get-molecularqc:
+    handler: handlers.getmolecularqc
+    events:
+      - http:
+          path: molecuarqc/{id}
           method: get
           request:
             parameters:
@@ -80,6 +134,10 @@ resources:
   # DynamoDB
   - ${file(sls-resources/dynamodb-shipment-receipts.yml)}
   - ${file(sls-resources/dynamodb-shipment-receipts-sync.yml)}
+  - ${file(sls-resources/dynamodb-molecularqcs.yml)}
+  - ${file(sls-resources/dynamodb-molecularqcs-sync.yml)}
+  - ${file(sls-resources/dynamodb-iscans.yml)}
+  - ${file(sls-resources/dynamodb-iscans-sync.yml)}
   - ${file(sls-resources/dynamodb-latest-record.yml)}
   # Cognito
   - ${file(sls-resources/cognito-user-pool.yml)}

@@ -1,0 +1,15 @@
+Resources:
+  IscansSync:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:service}-${opt:stage, self:provider.stage}-iscans-sync
+      AttributeDefinitions:
+        - AttributeName: caseId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: caseId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: costcenter
+          Value: pbc

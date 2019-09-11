@@ -3,39 +3,39 @@
 const bsi = require('./bsi/module');
 const dynamo = require('./dynamo/module');
 
-var receiptModule = (function() {
+var receiptModule = (() => {
 
     return {
-        pullRecentChanges: async function() {
+        pullRecentChanges: async () => {
             await bsi.login();
             
             var lastUpdated = await dynamo.getLatest('Shipment Receipt');
 
-            var receipts = await bsi.getNewReceipts(lastUpdated.lastModified);
-            var filteredReceipts = await dynamo.filterReceipts(receipts.rows);
+            var receipts = await bsi.receipts.getUpdated(lastUpdated.lastModified);
+            var filteredReceipts = await dynamo.receipts.filter(receipts.rows);
             await Promise.all(filteredReceipts.map(async shipmentId => {
-                var receipt = await bsi.getReceipt(shipmentId);
+                var receipt = await bsi.receipts.get(shipmentId);
                 if (lastUpdated.lastModified < receipt.lastModified) {
                     lastUpdated.lastModified = receipt.lastModified;
                 }
-                await dynamo.updateReceipt(receipt);
+                await dynamo.receipts.update(receipt);
             }));
 
             await dynamo.updateLatest(lastUpdated);
             await bsi.logoff();
         },
 
-        rebuildReceipt: async function(shipmentId) {
+        rebuild: async (shipmentId) => {
             await bsi.login();
-            var receipt = await bsi.getReceipt(shipmentId);
-            await dynamo.updateReceipt(receipt);
+            var receipt = await bsi.receipts.get(shipmentId);
+            await dynamo.receipts.update(receipt);
             await bsi.logoff();
         },
 
-        syncReceipt: async function(record) {
+        sync: async (record) => {
             var receipt = dynamo.toJson(record.dynamodb.NewImage);
             //TODO: Send information to endpoint, record response
-            await dynamo.updateSync({
+            await dynamo.receipts.updateSync({
                 shipmentId: receipt.shipmentId,
                 lastModified: receipt.lastModified,
                 lastSynced: new Date().toISOString(),
@@ -43,8 +43,8 @@ var receiptModule = (function() {
             });
         },
 
-        getReceipt: function(shipmentId) {
-            return dynamo.getReceipt(shipmentId);
+        get: (shipmentId) => {
+            return dynamo.receipts.get(shipmentId);
         }
     };
 })();

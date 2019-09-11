@@ -7,12 +7,12 @@ const AWS = require('aws-sdk');
 
 const secretClient = new AWS.SecretsManager();
 
-const bsiRequestModule = (function() {
+const bsiRequestModule = (() => {
     var sessionId;
 
     function getBsiSecrets() {
         return new Promise((resolve, reject) => {
-            secretClient.getSecretValue({SecretId: "bsi-cptac-service"}, function(err, data) {
+            secretClient.getSecretValue({SecretId: "bsi-cptac-service"}, (err, data) => {
                 err ? reject(err) : resolve(data);
             });
         });
@@ -26,12 +26,12 @@ const bsiRequestModule = (function() {
                 headers: {
                     'BSI-SESSION-ID': sessionId
                 }
-            }, function (error, response, body) {
+            }, (error, response, body) => {
                 if (!error && response.statusCode == 200) {
                     resolve(JSON.parse(body));
                 }
                 else if (error) {
-                    reject(JSON.parse(error));
+                    reject(error);
                 }
                 else {
                     reject(body);
@@ -41,14 +41,14 @@ const bsiRequestModule = (function() {
     }
 
     return {
-        login: function() {
+        login: () => {
             return new Promise((resolve, reject) => {
                 getBsiSecrets().then(data => {
                     request({
                         uri: config.uri.login,
                         method: 'POST',
                         form: JSON.parse(data.SecretString)
-                    }, function (error, response, body) {
+                    }, (error, response, body) => {
                         if (!error && response.statusCode == 200) {
                             sessionId = body;
                             resolve();
@@ -60,26 +60,17 @@ const bsiRequestModule = (function() {
             });
         },
 
-        getNewReceipts: function(lastModified) {
-            lastModified = dateformat(lastModified, 'mm%2Fdd%2Fyyyy%20HH%3AMM');
-            return createBsiRequest(config.uri.getModifiedShipments.replace('%lastModified%', lastModified));
-        },
-
-        getReceipt: function(shipmentId) {
-            return createBsiRequest(config.uri.getShipmentById.replace('%shipmentId%', shipmentId));
-        },
-
-        getTableMetadata: function(table) {
+        getTableMetadata: (table) => {
             return createBsiRequest(config.uri.fields.replace('%tablename%', table));
         },
 
-        logoff: function() {
+        logoff: () => {
             return new Promise((resolve, reject) => {
                 request({
                     uri: config.uri.logoff,
                     method: 'POST',
                     headers: { "BSI-SESSION-ID": sessionId }
-                }, function (error, response, body) {
+                }, (error, response, body) => {
                     if (!error && response.statusCode == 200) {
                         resolve();
                     } else {
@@ -87,6 +78,44 @@ const bsiRequestModule = (function() {
                     }
                 });
             });
+        },
+
+        receipts: {
+            getUpdated: (lastModified) => {
+                lastModified = dateformat(lastModified, 'mm%2Fdd%2Fyyyy%20HH%3AMM');
+                return createBsiRequest(config.uri.getModifiedShipments.replace('%lastModified%', lastModified));
+            },
+
+            get: (shipmentId) => {
+                return createBsiRequest(config.uri.getShipmentById.replace('%shipmentId%', shipmentId));
+            }
+        },
+
+        cases: {
+            getUpdated: (lastModified) => {
+                lastModified = dateformat(lastModified, 'mm%2Fdd%2Fyyyy%20HH%3AMM');
+                return Promise.all([
+                    createBsiRequest(config.uri.getCaseByVialLastModified.replace('%lastModified%', lastModified)),
+                    createBsiRequest(config.uri.getCaseBySampleLastModified.replace('%lastModified%', lastModified)),
+                    createBsiRequest(config.uri.getCaseBySubjectLastModified.replace('%lastModified%', lastModified))
+                ]).then(reports => {
+                    let caseIds = [];
+                    reports.forEach(report =>
+                        report.rows.forEach(results =>
+                            results.forEach(caseId => {
+                                caseIds.push(caseId);
+                            })
+                        )
+                    );
+                    return caseIds.filter((value, index, self) => {return self.indexOf(value) === index;});
+                })
+                .catch(error => console.log(error));
+            },
+
+            get: (caseId) => {
+                return Promise.all([createBsiRequest(config.uri.vialReport.replace('%caseId%', caseId)),
+                        createBsiRequest(config.uri.pooledReport.replace('%caseId%', caseId))]);
+            },
         }
     };
 })();
