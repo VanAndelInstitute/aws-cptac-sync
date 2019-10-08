@@ -33,7 +33,7 @@ const bsiParseModule = (() => {
                         return value.replace(' ', 'T');
                     }
                     else {
-                        return new Date(value);
+                        return new Date(value).toISOString();
                     }
                 }
                 if (metadata.name == 'vial.parent_id') {
@@ -170,6 +170,7 @@ const bsiParseModule = (() => {
 
         getLastModified: (molecularqc, vial) => {
             var lastModified = molecularqc.lastModified;
+            
             if (lastModified == null || lastModified < vial.lastModified) {
                 lastModified = vial.lastModified;
             }
@@ -179,6 +180,7 @@ const bsiParseModule = (() => {
             if (lastModified < vial.sampleLastModified) {
                 lastModified = vial.sampleLastModified;
             }
+            
             return lastModified;
         },
 
@@ -240,9 +242,9 @@ const bsiParseModule = (() => {
         },
 
         build: (vials) => {
-            var iscan = iscans.create();
             var vial = vials.find(vial => vial.tIscanMatch.length > 0 && vial.tIscanContamination.length > 0);
             if (vial) {
+                var iscan = iscans.create();
                 iscan.caseId = vial.subjectId,
                 iscan.lastModified = vial.subjectLastModified,
                 iscan.tumorTissue.iscanMatch = vial.tIscanMatch,

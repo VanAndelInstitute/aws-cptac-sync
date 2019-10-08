@@ -13,18 +13,18 @@ var bsiCaseModule = (() => {
 
             var bsiCases = await bsi.cases.getUpdated(lastUpdated.lastModified);
 
-            await Promise.all(bsiCases.map(async (caseId) => {
-                console.log("Building " + caseId);
+            for (let index = 0; index < bsiCases.length; index++) {
+                console.log("Building " + bsiCases[index]);
                 //Get all case data
-                var bsiCase = await bsi.cases.get(caseId);
-                if (lastUpdated.lastModified < bsiCase.molecularqc.lastModified.toISOString()) {
-                    lastUpdated.lastModified = bsiCase.molecularqc.lastModified.toISOString();
+                var bsiCase = await bsi.cases.get(bsiCases[index]);
+                if (lastUpdated.lastModified < bsiCase.molecularqc.lastModified) {
+                    lastUpdated.lastModified = bsiCase.molecularqc.lastModified;
                 }
                 await dynamo.molecularqcs.update(bsiCase.molecularqc);
-                if (bsiCases.iscan) {
+                if (bsiCase.iscan) {
                     await dynamo.iscans.update(bsiCase.iscan);
                 }
-            }));
+            }
 
             await dynamo.updateLatest(lastUpdated);
             await bsi.logoff();

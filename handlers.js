@@ -8,17 +8,17 @@ module.exports.pullrecentreceipts = (event, context) => {
 };
 
 module.exports.rebuildreceipt = (event, context) => {
-    shipmentReceipts.rebuildReceipt(event.pathParameters.id);
+    shipmentReceipts.rebuild(event.pathParameters.id);
 };
 
 module.exports.syncreceipt = (event, context) => {
     event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
-        shipmentReceipts.syncReceipt(record);
+        shipmentReceipts.sync(record);
     });
 };
 
 module.exports.getreceipt = async (event, context) => {
-    var receipt = await shipmentReceipts.getReceipt(event.pathParameters.id);
+    var receipt = await shipmentReceipts.get(event.pathParameters.id);
     return {
         statusCode: 200,
         headers: {
@@ -37,37 +37,41 @@ module.exports.pullrecentcases = (event, context) => {
 };
 
 module.exports.rebuildcase = (event, context) => {
-    bsiCase.rebuildCase(event.pathParameters.id);
+    bsiCase.rebuild(event.pathParameters.id);
 };
 
 //Molecular QC
+const molecularqcs = require('./molecularqcs');
+
 module.exports.syncmolecularqc = (event, context) => {
     event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
-        molecularqc.syncMolecularqc(record);
+        molecularqcs.sync(record);
     });
 };
 
 module.exports.getmolecularqc = async (event, context) => {
-    var iscan = await molecularqc.getMolecularqc(event.pathParameters.id);
+    var molecularqc = await molecularqcs.get(event.pathParameters.id);
     return {
         statusCode: 200,
         headers: {
             "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
             "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
         },
-        body: JSON.stringify({data: iscan})
+        body: JSON.stringify({data: molecularqc})
     };
 };
 
 //IScan
+const iscans = require('./iscans');
+
 module.exports.synciscan = (event, context) => {
     event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
-        iscan.syncIscan(record);
+        iscans.sync(record);
     });
 };
 
 module.exports.getiscan = async (event, context) => {
-    var iscan = await iscan.getIscan(event.pathParameters.id);
+    var iscan = await iscans.get(event.pathParameters.id);
     return {
         statusCode: 200,
         headers: {

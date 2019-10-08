@@ -13,13 +13,14 @@ var receiptModule = (() => {
 
             var receipts = await bsi.receipts.getUpdated(lastUpdated.lastModified);
             var filteredReceipts = await dynamo.receipts.filter(receipts.rows);
-            await Promise.all(filteredReceipts.map(async shipmentId => {
-                var receipt = await bsi.receipts.get(shipmentId);
+            
+            for (let index = 0; index < filteredReceipts.length; index++) {
+                var receipt = await bsi.receipts.get(filteredReceipts[index]);
                 if (lastUpdated.lastModified < receipt.lastModified) {
                     lastUpdated.lastModified = receipt.lastModified;
                 }
                 await dynamo.receipts.update(receipt);
-            }));
+            };
 
             await dynamo.updateLatest(lastUpdated);
             await bsi.logoff();

@@ -16,8 +16,11 @@ provider:
   environment:
     BSI_BASE_URL: 'https://rest-mirror.bsisystems.com/api/rest/'
     BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
+    BSI_RECEIPTS_SYNC: ${self:service}-${opt:stage, self:provider.stage}-receipts-sync
     BSI_ISCANS: ${self:service}-${opt:stage, self:provider.stage}-iscans
+    BSI_ISCANS_SYNC: ${self:service}-${opt:stage, self:provider.stage}-iscans-sync
     BSI_MOLECULARQCS: ${self:service}-${opt:stage, self:provider.stage}-molecularqcs
+    BSI_MOLECULARQCS_SYNC: ${self:service}-${opt:stage, self:provider.stage}-molecularqcs-sync
     LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
   iamRoleStatements:
     - Effect: Allow
@@ -44,16 +47,18 @@ package:
 functions:
   pull-recent-receipts:
     handler: handlers.pullrecentreceipts
+    memorySize: 256
     timeout: 600
     environment:
       BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
       LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
-    # events:
-    #   - name: ${self:service}-${opt:stage, self:provider.stage}-receipts-timer
-    #   - schedule: cron(0 6-19 * * ? *)
+    events:
+      - name: ${self:service}-${opt:stage, self:provider.stage}-receipts-timer
+      - schedule: cron(0 6-19 * * ? *)
   sync-receipt:
     handler: handlers.syncreceipt
     timeout: 120
+    memorySize: 256
     events:
       - stream:
           type: dynamodb
@@ -78,12 +83,14 @@ functions:
   pull-recent-cases:
     handler: handlers.pullrecentcases
     timeout: 600
-    # events:
-    #   - name: ${self:service}-${opt:stage, self:provider.stage}-iscan-timer
-    #   - schedule: cron(0 6-19 * * ? *)
+    memorySize: 256
+    events:
+      - name: ${self:service}-${opt:stage, self:provider.stage}-iscan-timer
+      - schedule: cron(15 6-19 * * ? *)
   sync-iscan:
     handler: handlers.synciscan
     timeout: 120
+    memorySize: 256
     events:
       - stream:
           type: dynamodb
@@ -95,6 +102,7 @@ functions:
               - StreamArn
   get-iscan:
     handler: handlers.getiscan
+    memorySize: 256
     events:
       - http:
           path: iscan/{id}
@@ -106,7 +114,8 @@ functions:
           cors: true
           authorizer: aws_iam
   sync-molecularqc:
-    handler: handlers.synciscan
+    handler: handlers.syncmolecularqc
+    memorySize: 256
     timeout: 120
     events:
       - stream:
@@ -115,10 +124,11 @@ functions:
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
-              - Iscans
+              - Molecularqcs
               - StreamArn
   get-molecularqc:
     handler: handlers.getmolecularqc
+    memorySize: 256
     events:
       - http:
           path: molecuarqc/{id}
@@ -152,3 +162,4 @@ custom:
   client:
     bucketName: ${self:service}-${opt:stage, self:provider.stage}.aws.vai.org
     distributionFolder: client/build
+    errorDocument: index.html

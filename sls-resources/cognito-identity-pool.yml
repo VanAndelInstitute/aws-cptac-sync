@@ -20,6 +20,12 @@ Resources:
           Fn::GetAtt: [CognitoUnauthRole, Arn]
         unauthenticated:
           Fn::GetAtt: [CognitoUnauthRole, Arn]
+      RoleMappings:
+        # Update with cognito resource cognito-idp.YOUR_REGION.amazonaws.com/YOUR_COGNITO_USERPOOL_ID:YOUR_COGNITO_CLIENT_ID
+        # yml and json keys cannot be generated dynamically
+        cognito-idp.YOUR_REGION.amazonaws.com/YOUR_COGNITO_USERPOOL_ID:YOUR_COGNITO_CLIENT_ID:
+          Type: 'Token'
+          AmbiguousRoleResolution: 'AuthenticatedRole'
 
   CognitoAuthRole:
     Type: AWS::IAM::Role
@@ -55,6 +61,8 @@ Resources:
               - Effect: 'Allow'
                 Action:
                   - 'execute-api:Invoke'
+                  - 'apigateway:GET'
+                  - 'apigateway:PUT'
                 Resource:
                   Fn::Join:
                     - ''

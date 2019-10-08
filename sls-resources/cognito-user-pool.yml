@@ -7,6 +7,19 @@ Resources:
         - email
       AutoVerifiedAttributes:
         - email
+      UserPoolTags:
+        costcenter: pbc
+
+  CognitoUserPoolDataManager:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: "Access group for people to view and sync data"
+      GroupName: "Data_Manager"
+      RoleArn:
+        Fn::GetAtt: [CognitoAuthRole, Arn]
+      Precedence: 1
+      UserPoolId:
+        Ref: CognitoUserPool
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient

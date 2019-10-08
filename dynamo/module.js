@@ -103,6 +103,13 @@ var dynamoModule = (() => {
                     Key: { caseId: caseId }
                 }).promise();
             },
+
+            updateSync: (syncData) => {
+                return docClient.put({
+                    TableName: process.env.BSI_MOLECULARQCS_SYNC,
+                    Item: syncData
+                }).promise();
+            }
         },
 
         iscans: {
@@ -119,6 +126,13 @@ var dynamoModule = (() => {
                     Key: { caseId: caseId }
                 }).promise();
             },
+
+            updateSync: (syncData) => {
+                return docClient.put({
+                    TableName: process.env.BSI_ISCANS_SYNC,
+                    Item: syncData
+                }).promise();
+            }
         }
     };
 })();
