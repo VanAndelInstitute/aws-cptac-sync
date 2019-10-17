@@ -9,7 +9,8 @@
   "dependencies": {
     "dateformat": "^3.0.3",
     "request": "^2.87.0",
-    "serverless-finch": "^2.3.2"
+    "serverless-finch": "^2.3.2",
+    "serverless-plugin-aws-alerts": "^1.4.0"
   },
   "bugs": {
     "url": "https://github.com/VanAndelInstitute/aws-cptac-sync/issues"

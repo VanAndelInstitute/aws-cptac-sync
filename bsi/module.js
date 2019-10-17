@@ -37,6 +37,24 @@ const bsiModule = (() => {
                     return bsiParse.cases.parseReport(results);
                 });
             }
+        },
+
+        molecularqcs: {
+            get: (caseId) => {
+                return bsiRequest.cases.get(caseId)
+                .then(results => {
+                    return bsiParse.molecularqcs.parseReport(results);
+                });
+            }
+        },
+
+        iscans: {
+            get: (caseId) => {
+                return bsiRequest.cases.get(caseId)
+                .then(results => {
+                    return bsiParse.iscans.parseReport(results);
+                });
+            }
         }
     };
 })();

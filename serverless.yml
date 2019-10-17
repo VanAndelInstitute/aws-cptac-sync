@@ -45,19 +45,22 @@ package:
     - .gitignore
 
 functions:
-  pull-recent-receipts:
-    handler: handlers.pullrecentreceipts
-    memorySize: 256
+  # Scheduled Tasks
+  pull-recent-changes:
+    handler: handlers.pullrecentchanges
     timeout: 600
-    environment:
-      BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
-      LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
+    memorySize: 256
+    alarms:
+      - name: functionErrors
+        threshold: 9
+        period: 10800
     events:
-      - name: ${self:service}-${opt:stage, self:provider.stage}-receipts-timer
+      - name: ${self:service}-${opt:stage, self:provider.stage}-iscan-timer
       - schedule: cron(0 6-19 * * ? *)
+  # Stream Subscriptions
   sync-receipt:
     handler: handlers.syncreceipt
-    timeout: 120
+    timeout: 30
     memorySize: 256
     events:
       - stream:
@@ -68,28 +71,22 @@ functions:
             Fn::GetAtt:
               - ShipmentReceipts
               - StreamArn
-  get-receipt:
-    handler: handlers.getreceipt
-    events:
-      - http:
-          path: receipt/{id}
-          method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
-  pull-recent-cases:
-    handler: handlers.pullrecentcases
-    timeout: 600
+  sync-molecularqc:
+    handler: handlers.syncmolecularqc
+    timeout: 30
     memorySize: 256
     events:
-      - name: ${self:service}-${opt:stage, self:provider.stage}-iscan-timer
-      - schedule: cron(15 6-19 * * ? *)
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          startingPosition: LATEST
+          arn:
+            Fn::GetAtt:
+              - Molecularqcs
+              - StreamArn
   sync-iscan:
     handler: handlers.synciscan
-    timeout: 120
+    timeout: 30
     memorySize: 256
     events:
       - stream:
@@ -100,8 +97,81 @@ functions:
             Fn::GetAtt:
               - Iscans
               - StreamArn
+  # Shipment Receipts API
+  get-receipt:
+    handler: handlers.getreceipt
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: receipt/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  get-receipt-sync:
+    handler: handlers.getreceiptsync
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: receiptsync/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  rebuild-receipt:
+    handler: handlers.rebuildreceipt
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: receipt/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  resync-receipt:
+    handler: handlers.resyncreceipt
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: receiptsync/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  pull-recent-receipts:
+    handler: handlers.pullrecentreceipts
+    memorySize: 256
+    timeout: 600
+    environment:
+      BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
+      LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
+    events:
+      - http:
+         path: pullreceipts
+         method: put
+         async: true
+         cors: true
+         authorizer: aws_iam
+  # IScan API
   get-iscan:
     handler: handlers.getiscan
+    timeout: 30
     memorySize: 256
     events:
       - http:
@@ -113,25 +183,13 @@ functions:
                 id: true
           cors: true
           authorizer: aws_iam
-  sync-molecularqc:
-    handler: handlers.syncmolecularqc
-    memorySize: 256
-    timeout: 120
-    events:
-      - stream:
-          type: dynamodb
-          batchSize: 1
-          startingPosition: LATEST
-          arn:
-            Fn::GetAtt:
-              - Molecularqcs
-              - StreamArn
-  get-molecularqc:
-    handler: handlers.getmolecularqc
+  get-iscan-sync:
+    handler: handlers.getiscansync
+    timeout: 30
     memorySize: 256
     events:
       - http:
-          path: molecuarqc/{id}
+          path: iscansync/{id}
           method: get
           request:
             parameters:
@@ -139,6 +197,113 @@ functions:
                 id: true
           cors: true
           authorizer: aws_iam
+  rebuild-iscan:
+    handler: handlers.rebuildiscan
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: iscan/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  resync-iscan:
+    handler: handlers.resynciscan
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: iscansync/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  pull-recent-iscan:
+    handler: handlers.pullrecentiscans
+    timeout: 600
+    memorySize: 256
+    events:
+      - http:
+         path: pulliscans
+         method: put
+         async: true
+         cors: true
+         authorizer: aws_iam
+  # Molecular QC API
+  get-molecularqc:
+    handler: handlers.getmolecularqc
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: molecularqc/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  get-molecularqc-sync:
+    handler: handlers.getmolecularqcsync
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: molecularqcsync/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  rebuild-molecularqc:
+    handler: handlers.rebuildmolecularqc
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: molecularqc/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  resync-molecularqc:
+    handler: handlers.resyncmolecularqc
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: molecularqcsync/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  pull-recent-molecularqc:
+    handler: handlers.pullrecentmolecularqcs
+    timeout: 600
+    memorySize: 256
+    events:
+      - http:
+         path: pullmolecularqcs
+         method: put
+         async: true
+         cors: true
+         authorizer: aws_iam
 
 resources:
   # DynamoDB
@@ -157,9 +322,26 @@ resources:
 
 plugins:
   - serverless-finch
+  - serverless-plugin-aws-alerts
 
 custom:
   client:
     bucketName: ${self:service}-${opt:stage, self:provider.stage}.aws.vai.org
     distributionFolder: client/build
     errorDocument: index.html
+  alerts:
+    definitions:
+      functionErrors:
+        threshold: 3
+        period: 600
+        treatMissingData: notBreaching
+    stages:
+      - dev
+    topics:
+      alarm:
+        topic: ${self:service}-${self:provider.stage}-alerts-alarm
+        notifications:
+          - protocol: email
+            endpoint: anthony.watkins@vai.org
+    alarms:
+      - functionErrors

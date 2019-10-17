@@ -371,6 +371,34 @@ const bsiParseModule = (() => {
                     });
                 });
             }
+        },
+
+        molecularqcs : {
+            parseReport: (results) => {
+                return new Promise((resolve, reject) => {
+                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                    .then(async (reports) => {
+                        var vials = reports[0];
+                        vials = await cases.vials.buildLineage(vials, reports[1]);
+                        var molecularqc = molecularqcs.build(vials);
+                        resolve(molecularqc);
+                    });
+                });
+            }
+        },
+
+        iscans: {
+            parseReport: (results) => {
+                return new Promise((resolve, reject) => {
+                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                    .then(async (reports) => {
+                        var vials = reports[0];
+                        vials = await cases.vials.buildLineage(vials, reports[1]);
+                        var iscan = iscans.build(vials);
+                        resolve(iscan);
+                    });
+                });
+            }
         }
     };
 })();

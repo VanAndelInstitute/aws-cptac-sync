@@ -5,6 +5,17 @@ const AWS = require('aws-sdk');
 const docClient  = new AWS.DynamoDB.DocumentClient({ convertEmptyValues: true });
 
 var dynamoModule = (() => {
+    var upToDate = (oldValue, newValue) => {
+        //Deep copy so deleteing last modified won't effect the original
+        oldValue = JSON.parse(JSON.stringify(oldValue));
+        newValue = JSON.parse(JSON.stringify(newValue));
+
+        delete oldValue.lastModified;
+        delete newValue.lastModified;
+
+        return JSON.stringify(oldValue) == JSON.stringify(newValue);
+    }
+    
     var receipt = {
         check: (shipmentId, lastModified) => {
             return new Promise(async (resolve, reject) => {
@@ -81,6 +92,13 @@ var dynamoModule = (() => {
                 }).promise();
             },
 
+            getSync: (shipmentId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_RECEIPTS_SYNC,
+                    Key: { shipmentId: shipmentId }
+                }).promise();
+            },
+
             updateSync: (syncData) => {
                 return docClient.put({
                     TableName: process.env.BSI_RECEIPTS_SYNC,
@@ -90,16 +108,25 @@ var dynamoModule = (() => {
         },
         
         molecularqcs: {
-            update: (molecularqc) => {
-                return docClient.put({
-                    TableName: process.env.BSI_MOLECULARQCS,
-                    Item: molecularqc
-                }).promise();
+            update: async (molecularqc) => {
+                if (!upToDate(await module.exports.molecularqcs.get(molecularqc.caseId), molecularqc)) {
+                    return docClient.put({
+                        TableName: process.env.BSI_MOLECULARQCS,
+                        Item: molecularqc
+                    }).promise();
+                }
             },
 
             get: (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_MOLECULARQCS,
+                    Key: { caseId: caseId }
+                }).promise();
+            },
+
+            getSync: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_MOLECULARQCS_SYNC,
                     Key: { caseId: caseId }
                 }).promise();
             },
@@ -113,16 +140,25 @@ var dynamoModule = (() => {
         },
 
         iscans: {
-            update: (iscan) => {
-                return docClient.put({
-                    TableName: process.env.BSI_ISCANS,
-                    Item: iscan
-                }).promise();
+            update: async (iscan) => {
+                if (!upToDate(await module.exports.iscans.get(iscan.caseId), iscan)) {
+                    return docClient.put({
+                        TableName: process.env.BSI_ISCANS,
+                        Item: iscan
+                    }).promise();
+                }
             },
 
             get: (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_ISCANS,
+                    Key: { caseId: caseId }
+                }).promise();
+            },
+
+            getSync: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_ISCANS_SYNC,
                     Key: { caseId: caseId }
                 }).promise();
             },
