@@ -1,7 +1,7 @@
 // App.js
 import React, { Component } from 'react';
-import { Link, withRouter } from 'react-router-dom';
-import { Auth, Hub, API } from 'aws-amplify';
+import { withRouter } from 'react-router-dom';
+import { Auth, Hub } from 'aws-amplify';
 import { Nav, Navbar, NavItem } from 'react-bootstrap';
 import Routes from './Routes';
 import './App.css';
@@ -36,7 +36,10 @@ class App extends Component {
       this.setState({ isAuthenticated: true });
       this.setState({ isDataManager: session.idToken.payload['cognito:groups'].includes('Data_Manager') });
     })
-    .catch(() => console.log("Not signed in"));
+    .catch(() => {
+      this.setState({ isDataManager: false });
+      this.setState({ isAuthenticated: false });
+    });
   };
 
   render() {
@@ -65,9 +68,9 @@ class App extends Component {
             )}
             <Nav>
               {this.state.isAuthenticated ? (
-                <NavItem className="link" onClick={() => Auth.signOut({ global: true })}>Logout</NavItem>
+                <NavItem className="nav-link" onClick={() => Auth.signOut()}>Logout</NavItem>
               ) : (
-                <NavItem className="link" onClick={() => Auth.federatedSignIn()}>Login</NavItem>
+                <NavItem className="nav-link" onClick={() => Auth.federatedSignIn()}>Login</NavItem>
               )}
             </Nav>
           </Navbar.Collapse>
