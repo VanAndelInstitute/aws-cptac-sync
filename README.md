@@ -73,10 +73,11 @@ Once deployment is done, replace the RoleMappings IdentityProvider key with the 
 1. Open cognito-identity-pool.yml
 2. Find CognitoIdentityPoolRoles > Properties > RoleMappings
 3. Uncomment block and update cognito-idp.YOUR_REGION.amazonaws.com/YOUR_COGNITO_USERPOOL_ID:YOUR_COGNITO_CLIENT_ID
+4. Deploy updated values using 'serverless deploy'
 
 After deployment is done, log into the aws console
 
-1. Open the User Pool serverless framework created for you
+1. Open the Cognito User Pool serverless framework created for you
 2. (Optional) Configure Federation
    - Go to Federation > Identity Providers
       - Select SAML
@@ -96,3 +97,5 @@ After deployment is done, log into the aws console
 ## References
 
 * Serverless documentation (https://serverless.com/framework/docs/providers/aws/)
+* Serverless AWS Alerts documentation (https://github.com/ACloudGuru/serverless-plugin-aws-alerts)
+* Serverless Finch (https://github.com/fernando-mc/serverless-finch)
