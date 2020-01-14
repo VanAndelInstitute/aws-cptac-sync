@@ -94,6 +94,24 @@ After deployment is done, log into the aws console
    - (Optional) Go to UI Customization
       - Upload an image or change any CSS you want to change to the hosted login page
 
+### Static Files
+
+Build React project using the client project
+
+```
+cd client
+npm run build
+cd ..
+```
+
+You can deploy your built react project using serverless finch
+
+Note: This will completely remove any files already out there
+
+```
+serverless client deploy
+```
+
 ## References
 
 * Serverless documentation (https://serverless.com/framework/docs/providers/aws/)
