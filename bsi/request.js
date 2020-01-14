@@ -12,7 +12,7 @@ const bsiRequestModule = (() => {
 
     function getBsiSecrets() {
         return new Promise((resolve, reject) => {
-            secretClient.getSecretValue({SecretId: "bsi-cptac-service"}, (err, data) => {
+            secretClient.getSecretValue({SecretId: process.env.BSI_SECRET}, (err, data) => {
                 err ? reject(err) : resolve(data);
             });
         });
