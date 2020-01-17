@@ -114,7 +114,7 @@ export default class ShipmentReceipts extends Component {
               <form onSubmit={this.handleSubmit}>
                 <div class="input-group">
                   <div class="input-group-prepend">
-                    <button class="btn btn-secondary btn-sm" onClick={this.handleReload}><img src="/sync.png" alt="reload shipments"></img></button>
+                    <button type="button" class="btn btn-secondary btn-sm" onClick={this.handleReload}><img src="/sync.png" alt="reload shipments"></img></button>
                   </div>
                   <input id="search" type="text" class="form-control" placeholder="Enter Shipment Id" value={this.state.shipmentId} onChange={this.handleChange} />
                   <div class="input-group-append">

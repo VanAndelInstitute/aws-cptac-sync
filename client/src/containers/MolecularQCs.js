@@ -115,7 +115,7 @@ export default class MolecularQCs extends Component {
               <form onSubmit={this.handleSubmit}>
                 <div class="input-group">
                   <div class="input-group-prepend">
-                    <button class="btn btn-secondary btn-sm" onClick={this.handleReload}><img src="/sync.png" alt="reload molecular qcs"></img></button>
+                    <button type="button" class="btn btn-secondary btn-sm" onClick={this.handleReload}><img src="/sync.png" alt="reload molecular qcs"></img></button>
                   </div>
                   <input id="search" type="text" class="form-control" placeholder="Enter Case Id" value={this.state.caseId} onChange={this.handleChange} />
                   <div class="input-group-append">
