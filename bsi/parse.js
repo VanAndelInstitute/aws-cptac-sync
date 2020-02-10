@@ -189,12 +189,12 @@ const bsiParseModule = (() => {
                 specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
                 analyteID: vial.bsiId,
                 dateOfExtraction: vial.dateEntered,
-                volume: parseFloat(vial.initialVolume),
+                volume: vial.initialVolume ? parseFloat(vial.initialVolume) : null,
                 rinValue: vial.rin ? parseFloat(vial.rin) : null,
                 nanoDrop: {
-                    concentration: parseFloat(vial.concentrationByNanodropNgL),
-                    a260OverA280: parseFloat(vial['260280']),
-                    a260OverA230: parseFloat(vial['260230'])
+                    concentration: vial.concentrationByNanodropNgL ? parseFloat(vial.concentrationByNanodropNgL) : null,
+                    a260OverA280: vial['260280'] ? parseFloat(vial['260280']) : null,
+                    a260OverA230: vial['260280'] ? parseFloat(vial['260230']) : null
                 }
             }
         },
@@ -204,15 +204,15 @@ const bsiParseModule = (() => {
                 specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
                 analyteID: vial.bsiId,
                 dateOfExtraction: vial.dateEntered,
-                volume: parseFloat(vial.initialVolume),
-                gelScore: parseFloat(vial.agaroseGelScore),
+                volume: vial.initialVolume ? parseFloat(vial.initialVolume) : null,
+                gelScore: vial.agaroseGelScore ? parseFloat(vial.agaroseGelScore) : null,
                 qubit: {
-                    concentration: parseFloat(vial.concentrationByQubitNgL)
+                    concentration: vial.concentrationByQubitNgL ? parseFloat(vial.concentrationByQubitNgL) : null
                 },
                 nanoDrop: {
-                    concentration: parseFloat(vial.concentrationByNanodropNgL),
-                    a260OverA280: parseFloat(vial['260280']),
-                    a260OverA230: parseFloat(vial['260230'])
+                    concentration: vial.concentrationByNanodropNgL ? parseFloat(vial.concentrationByNanodropNgL) : null,
+                    a260OverA280: vial['260280'] ? parseFloat(vial['260280']) : null,
+                    a260OverA230: vial['260230'] ? parseFloat(vial['260230']) : null
                 },
                 Bioanalyzer: {
                     min: vial.bioaMinBp,
