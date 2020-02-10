@@ -32,6 +32,14 @@ Install required packages
 npm i
 ```
 
+Install required packages for client
+
+```
+cd client
+npm i
+..
+```
+
 ## Testing
 
 To test you code, you can have serverless invoke your function
@@ -68,6 +76,12 @@ or
 serverless deploy --verbose
 ```
 
+#### On First Deployment
+
+There are a few things not deployed due to security or due to difficulty in configuration the first time
+
+##### Configure your Cognito Role Mappings
+
 Once deployment is done, replace the RoleMappings IdentityProvider key with the resource ids that were deployed
 
 1. Open cognito-identity-pool.yml
@@ -75,7 +89,7 @@ Once deployment is done, replace the RoleMappings IdentityProvider key with the 
 3. Uncomment block and update cognito-idp.YOUR_REGION.amazonaws.com/YOUR_COGNITO_USERPOOL_ID:YOUR_COGNITO_CLIENT_ID
 4. Deploy updated values using 'serverless deploy'
 
-After deployment is done, log into the aws console
+##### Configuration SSO IdP
 
 1. Open the Cognito User Pool serverless framework created for you
 2. (Optional) Configure Federation
@@ -93,6 +107,21 @@ After deployment is done, log into the aws console
       - Add a domain prefix or bring your own
    - (Optional) Go to UI Customization
       - Upload an image or change any CSS you want to change to the hosted login page
+
+#### Set up secrets
+
+Secrets aren't automatically deployed due not wanting secrets (such as api keys) in configuration files
+
+1. Open Secrets Manager on the AWS Console
+2. Click Store New Secret
+3. Select Other Type of Secrets
+4. Enter Secret Information
+5. Click Next
+6. Enter Secret Name
+7. Add costcenter to tags
+8. Click Next
+9. Click Next
+10. Click Store
 
 ### Static Files
 
