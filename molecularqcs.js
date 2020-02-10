@@ -56,11 +56,13 @@ var molecularqcsModule = (() => {
         },
 
         sync: async (molecularqc) => {
+            var lastModified = molecularqc.lastModified;
+            delete molecularqc.lastModified;
             var statusCode = await createCdrRequest(molecularqc);
 
             await dynamo.molecularqcs.updateSync({
                 caseId: molecularqc.caseId,
-                lastModified: molecularqc.lastModified,
+                lastModified: lastModified,
                 lastSynced: new Date().toISOString(),
                 syncResult: statusCode
             });
