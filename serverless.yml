@@ -333,19 +333,19 @@ plugins:
 
 custom:
   bsi_base_url:
-    prod: 'https://rest-mirror.bsisystems.com/api/rest/'
+    prod: 'https://rest.bsisystems.com/api/rest/'
     mirror: 'https://rest-mirror.bsisystems.com/api/rest/'
     dev: 'https://rest-mirror.bsisystems.com/api/rest/'
   cdr_base_url:
-    prod: 'https://cptac3.cptac.net/cptacdataservices/rest/'
+    prod: 'https://cptac3.cancer.gov/cptacdataservices/rest/'
     mirror: 'https://cptac3.cptac.net/cptacdataservices/rest/'
     dev: 'https://cptac3.cptac.net/cptacdataservices/rest/'
   table_prefix:
-    prod: ${self:service}
+    prod: ${self:service}-${opt:stage, self:provider.stage}
     mirror: ${self:service}-${opt:stage, self:provider.stage}
     dev: ${self:service}-${opt:stage, self:provider.stage}
   service_prefix:
-    prod: ${self:service}
+    prod: ${self:service}-${opt:stage, self:provider.stage}
     mirror: ${self:service}-${opt:stage, self:provider.stage}
     dev: ${self:service}-${opt:stage, self:provider.stage}
   client:
@@ -360,9 +360,11 @@ custom:
         treatMissingData: notBreaching
     stages:
       - dev
+      - mirror
+      - prod
     topics:
       alarm:
-        topic: ${self:service}-${self:provider.stage}-alerts-alarm
+        topic: ${self:service}-${opt:stage, self:provider.stage}-alerts-alarm
         notifications:
           - protocol: email
             endpoint: anthony.watkins@vai.org
