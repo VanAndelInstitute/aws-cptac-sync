@@ -58,8 +58,10 @@ var iscansModule = (() => {
         },
 
         sync: async (iscan) => {
+            console.log("Syncing " + iscan.caseId + " to CDR.");
             var statusCode = await createCdrRequest(iscan);
             
+            console.log("Recording status code " + statusCode + ".");
             await dynamo.iscans.updateSync({
                 caseId: iscan.caseId,
                 lastModified: iscan.lastModified,

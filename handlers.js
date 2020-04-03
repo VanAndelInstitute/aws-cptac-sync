@@ -93,7 +93,7 @@ module.exports.pullrecentmolecularqcs = async (event, context) => {
 };
 
 module.exports.syncmolecularqc = (event, context) => {
-    event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
+    event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
         molecularqcs.sync(molecularqcs.dynamoToJson(record.dynamodb.NewImage));
     });
 };
@@ -164,7 +164,7 @@ module.exports.pullrecentiscans = async (event, context) => {
 };
 
 module.exports.synciscan = (event, context) => {
-    event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
+    event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
         iscans.sync(iscans.dynamoToJson(record.dynamodb.NewImage));
     });
 };

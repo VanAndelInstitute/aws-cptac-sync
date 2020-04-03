@@ -63,16 +63,17 @@ functions:
         period: 10800
     events:
       - name: ${self:custom.service_prefix.${opt:stage, self:provider.stage}, self.service_prefix.dev}-iscan-timer
-      - schedule: cron(0 6-19 * * ? *)
+      - schedule: cron(0 10-23 * * ? *)
   # Stream Subscriptions
   sync-receipt:
     handler: handlers.syncreceipt
-    timeout: 30
+    timeout: 120
     memorySize: 256
     events:
       - stream:
           type: dynamodb
           batchSize: 1
+          maxiumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
@@ -80,12 +81,13 @@ functions:
               - StreamArn
   sync-molecularqc:
     handler: handlers.syncmolecularqc
-    timeout: 30
+    timeout: 120
     memorySize: 256
     events:
       - stream:
           type: dynamodb
           batchSize: 1
+          maxiumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
@@ -93,12 +95,13 @@ functions:
               - StreamArn
   sync-iscan:
     handler: handlers.synciscan
-    timeout: 30
+    timeout: 120
     memorySize: 256
     events:
       - stream:
           type: dynamodb
           batchSize: 1
+          maxiumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:

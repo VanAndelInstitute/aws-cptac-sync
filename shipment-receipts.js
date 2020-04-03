@@ -72,8 +72,10 @@ var receiptModule = (() => {
         },
 
         sync: async (receipt) => {
+            console.log("Syncing " + receipt.shipmentId + " to CDR.");
             var statusCode = await createCdrRequest(receipt);
             
+            console.log("Recording status code " + statusCode + ".");
             return dynamo.receipts.updateSync({
                 shipmentId: receipt.shipmentId,
                 lastModified: receipt.lastModified,
