@@ -227,6 +227,36 @@ var dynamoModule = (() => {
                     Item: syncData
                 }).promise();
             }
+        },
+
+        proteins: {
+            update: async (iscan) => {
+                return docClient.put({
+                    TableName: process.env.BSI_PROTEINS,
+                    Item: iscan
+                }).promise();
+            },
+
+            get: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_PROTEINS,
+                    Key: { caseId: caseId }
+                }).promise();
+            },
+
+            getSync: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.BSI_PROTEINS_SYNC,
+                    Key: { caseId: caseId }
+                }).promise();
+            },
+
+            updateSync: (syncData) => {
+                return docClient.put({
+                    TableName: process.env.BSI_PROTEINS_SYNC,
+                    Item: syncData
+                }).promise();
+            }
         }
     };
 })();

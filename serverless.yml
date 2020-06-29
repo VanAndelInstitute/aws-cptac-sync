@@ -24,6 +24,8 @@ provider:
     BSI_ISCANS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-iscans-sync
     BSI_MOLECULARQCS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-molecularqcs
     BSI_MOLECULARQCS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-molecularqcs-sync
+    BSI_PROTEINS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-proteins
+    BSI_PROTEINS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-proteins-sync
     LATEST_RECORD: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-latest-record
   iamRoleStatements:
     - Effect: Allow
@@ -106,6 +108,20 @@ functions:
           arn:
             Fn::GetAtt:
               - Iscans
+              - StreamArn
+  sync-protein:
+    handler: handlers.syncprotein
+    timeout: 120
+    memorySize: 256
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          maxiumRetryAttempts: 0
+          startingPosition: LATEST
+          arn:
+            Fn::GetAtt:
+              - Proteins
               - StreamArn
   # Shipment Receipts API
   get-receipt:
@@ -314,6 +330,74 @@ functions:
          async: true
          cors: true
          authorizer: aws_iam
+  # Protein API
+  get-protein:
+    handler: handlers.getprotein
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: protein/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  get-protein-sync:
+    handler: handlers.getproteinsync
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: proteinsync/{id}
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  rebuild-protein:
+    handler: handlers.rebuildprotein
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: protein/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  resync-protein:
+    handler: handlers.resyncprotein
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: proteinsync/{id}
+          method: put
+          request:
+            parameters:
+              paths:
+                id: true
+          cors: true
+          authorizer: aws_iam
+  pull-recent-proteins:
+    handler: handlers.pullrecentproteins
+    timeout: 600
+    memorySize: 256
+    events:
+      - http:
+         path: pullproteins
+         method: put
+         async: true
+         cors: true
+         authorizer: aws_iam
 
 resources:
   # DynamoDB
@@ -323,6 +407,8 @@ resources:
   - ${file(sls-resources/dynamodb-molecularqcs-sync.yml)}
   - ${file(sls-resources/dynamodb-iscans.yml)}
   - ${file(sls-resources/dynamodb-iscans-sync.yml)}
+  - ${file(sls-resources/dynamodb-proteins.yml)}
+  - ${file(sls-resources/dynamodb-proteins-sync.yml)}
   - ${file(sls-resources/dynamodb-latest-record.yml)}
   # Cognito
   - ${file(sls-resources/cognito-user-pool.yml)}

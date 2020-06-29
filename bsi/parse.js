@@ -141,6 +141,7 @@ const bsiParseModule = (() => {
 
         build: (vials) => {
             var molecularqc = molecularqcs.create();
+            
             vials.filter(vial => vial.designatedAliquot.length > 0).forEach(vial => {
                 molecularqc.caseId = vial.subjectId;
                 molecularqc.lastModified = molecularqcs.getLastModified(molecularqc, vial);
@@ -153,7 +154,7 @@ const bsiParseModule = (() => {
                         molecularqc.tumorRNA.push(molecularqcs.buildRna(vial));
                     }
                 }
-                else if (vial.materialType = 'DNA') {
+                else if (vial.materialType == 'DNA') {
                     if (vial.sampleType == 'NAT') {
                         molecularqc.normalDNA.push(molecularqcs.buildDna(vial));
                     }
@@ -221,6 +222,94 @@ const bsiParseModule = (() => {
                         upper: vial.bioaAvgUpperBp
                     }
                 }
+            }
+        }
+    }
+
+    var proteins = {
+        create: () => {
+            return {
+                caseId: '',
+                lastModified: null,
+                tumorProtein: [],
+                normalProtein: []
+            };
+        },
+
+        build: (vials) => {
+            var hasProteins = vials.find(vial => vial.designatedAliquot.length > 0 && vial.materialType != 'DNA'
+                && vial.materialType != 'RNA');
+            if (hasProteins) {
+                var protein = proteins.create();
+
+                vials.filter(vial => vial.designatedAliquot.length > 0).forEach(vial => {
+                    protein.caseId = vial.subjectId;
+                    protein.lastModified = proteins.getLastModified(protein, vial);
+    
+                    if (vial.materialType != 'DNA' && vial.materialType != 'RNA') {
+                        if (vial.sampleType == 'NAT') {
+                            if (vial.materialType == 'Cell Pellet') {
+                                protein.normalProtein.push(proteins.buildAmlProtein(vial));
+                            }
+                            else {
+                                protein.normalProtein.push(proteins.buildProtein(vial));
+                            }
+                        }
+                        else if (vial.sampleType == 'Primary') {
+                            if (vial.materialType == 'Cell Pellet') {
+                                protein.tumorProtein.push(proteins.buildAmlProtein(vial));
+                            }
+                            else {
+                                protein.tumorProtein.push(proteins.buildProtein(vial));
+                            }
+                        }
+                    }
+                });
+                
+                return protein;
+            }
+            else {
+                return;
+            }
+        },
+
+        getLastModified: (protien, vial) => {
+            var lastModified = protien.lastModified;
+            
+            if (lastModified == null || lastModified < vial.lastModified) {
+                lastModified = vial.lastModified;
+            }
+            if (lastModified < vial.subjectLastModified) {
+                lastModified = vial.subjectLastModified;
+            }
+            if (lastModified < vial.sampleLastModified) {
+                lastModified = vial.sampleLastModified;
+            }
+            
+            return lastModified;
+        },
+
+        buildProtein: (vial) => {
+            return {
+                specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
+                aliquotID: "",
+                analyteID: vial.bsiId,
+                processingDate: vial.dateEntered,
+                materialType: vial.materialType,
+                volume: vial.initialVolume ? parseFloat(vial.initialVolume) : null,
+                volumeUnit: "mg"
+            }
+        },
+
+        buildAmlProtein: (vial) => {
+            return {
+                specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
+                aliquotID: "",
+                analyteID: vial.bsiId,
+                processingDate: "",
+                materialType: vial.materialType,
+                volume: vial.field_336 ? parseFloat(vial.field_336) : null,
+                volumeUnit: "x10^6"
             }
         }
     }
@@ -367,7 +456,8 @@ const bsiParseModule = (() => {
                         vials = await cases.vials.buildLineage(vials, reports[1]);
                         var molecularqc = molecularqcs.build(vials);
                         var iscan = iscans.build(vials);
-                        resolve({molecularqc: molecularqc, iscan: iscan});
+                        var protein = proteins.build(vials);
+                        resolve({molecularqc: molecularqc, iscan: iscan, protein: protein});
                     });
                 });
             }
@@ -397,6 +487,18 @@ const bsiParseModule = (() => {
                         var iscan = iscans.build(vials);
                         resolve(iscan);
                     });
+                });
+            }
+        },
+
+        proteins: {
+            parseReport: (results) => {
+                Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                .then(async (reports) => {
+                    var vials = reports[0];
+                    vials = await cases.vials.buildLineage(vials, reports[1]);
+                    var protien = proteins.build(vials);
+                    resolve(protien);
                 });
             }
         }

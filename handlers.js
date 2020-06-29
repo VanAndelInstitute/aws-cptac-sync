@@ -4,6 +4,7 @@ const shipmentReceipts = require('./shipment-receipts');
 const bsiCase = require('./bsi-case');
 const molecularqcs = require('./molecularqcs');
 const iscans = require('./iscans');
+const proteins = require('./proteins');
 
 module.exports.pullrecentchanges = async (event, context) => {
     await shipmentReceipts.pullRecentChanges();
@@ -225,5 +226,76 @@ module.exports.resynciscan = async (event, context) => {
             "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
         },
         body: "IScan for case id '" + event.pathParameters.id + "' has been successfully resynced."
+    };
+};
+
+// Proteins
+
+module.exports.pullrecentproteins = async (event, context) => {
+    await proteins.pullRecentChanges();
+};
+
+module.exports.syncprotein = (event, context) => {
+    event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
+        proteins.sync(proteins.dynamoToJson(record.dynamodb.NewImage));
+    });
+};
+
+module.exports.getprotein = async (event, context) => {
+    var protein = await proteins.get(event.pathParameters.id);
+    if (Object.entries(protein).length === 0 && protein.constructor === Object) {
+        return {
+            statusCode: 404,
+            headers: {
+                "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
+                "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
+            },
+            body: "Protein for case '" + event.pathParameters.id + "' was not found."
+        };
+    }
+    return {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
+        },
+        body: JSON.stringify({data: protein.Item})
+    };
+};
+
+module.exports.getproteinsync = async (event, context) => {
+    var sync = await proteins.getSync(event.pathParameters.id);
+    return {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
+        },
+        body: JSON.stringify({data: sync.Item})
+    };
+};
+
+module.exports.rebuildprotein = async (event, context) => {
+    await proteins.rebuild(event.pathParameters.id);
+    return {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
+        },
+        body: "Protein for case id '" + event.pathParameters.id + "' has been successfully rebuilt."
+    };
+};
+
+module.exports.resyncprotein = async (event, context) => {
+    var protein = await proteins.get(event.pathParameters.id);
+    await proteins.sync(protein.Item);
+    return {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
+        },
+        body: "Protein for case id '" + event.pathParameters.id + "' has been successfully resynced."
     };
 };

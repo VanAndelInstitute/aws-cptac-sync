@@ -32,6 +32,7 @@ config.uri.vialReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +
     'display_fields=%2Bsubject_8.field_16&' +
     'display_fields=%2Bsubject_8.field_23&' +
     'display_fields=%2Bsubject_8.field_22&' +
+    'display_fields=%2Bvial.field_336&' +
     'criteria=subject.subject_id="%caseId%"&' +
     'sort_fields=vial.date_entered';
 config.uri.pooledReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +

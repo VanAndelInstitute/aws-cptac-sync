@@ -24,6 +24,9 @@ var bsiCaseModule = (() => {
                     if (bsiCase.iscan) {
                         await dynamo.iscans.update(bsiCase.iscan);
                     }
+                    if (bsiCase.protein) {
+                        await dynamo.proteins.update(bsiCase.protein);
+                    }
                 }
     
                 await dynamo.updateLatest(lastUpdated);

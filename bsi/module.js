@@ -55,6 +55,15 @@ const bsiModule = (() => {
                     return bsiParse.iscans.parseReport(results);
                 });
             }
+        },
+
+        proteins: {
+            get: (caseId) => {
+                return bsiRequest.cases.get(caseId)
+                .then(results => {
+                    return bsiParse.proteins.parseReport(results);
+                });
+            }
         }
     };
 })();
