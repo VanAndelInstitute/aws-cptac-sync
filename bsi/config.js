@@ -12,6 +12,7 @@ config.uri.vialReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +
     'display_fields=%2Bvial.date_modified&' +
     'display_fields=%2Bvial.mat_type&' +
     'display_fields=%2Bvial.study_id&' +
+    'display_fields=%2Bvial.volume&' +
     'display_fields=%2Bvial.field_345&' +
     'display_fields=%2Bvial.field_342&' +
     'display_fields=%2Bvial.field_343&' +
@@ -23,6 +24,7 @@ config.uri.vialReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +
     'display_fields=%2Bvial.field_399&' +
     'display_fields=%2Bvial.field_356&' +
     'display_fields=%2Bvial.field_366&' +
+    'display_fields=%2Bvial.field_336&' +
     'display_fields=%2Bsample.date_last_modified&' +
     'display_fields=%2Bsample.tumor_type&' +
     'display_fields=%2Bsubject.subject_id&' +
@@ -32,7 +34,6 @@ config.uri.vialReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +
     'display_fields=%2Bsubject_8.field_16&' +
     'display_fields=%2Bsubject_8.field_23&' +
     'display_fields=%2Bsubject_8.field_22&' +
-    'display_fields=%2Bvial.field_336&' +
     'criteria=subject.subject_id="%caseId%"&' +
     'sort_fields=vial.date_entered';
 config.uri.pooledReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +
@@ -103,9 +104,9 @@ config.receipts.fieldNameMap = {'shipment.date_modified': 'lastModified'};
 config.vials = {};
 config.vials.Metadata = [
     {'table': 'vial', 'fields': ['vial.bsi_id', 'vial.current_label', 'vial.parent_id', 'vial.date_entered', 
-    'vial.date_modified', 'vial.mat_type', 'vial.study_id', 'vial.field_345', 'vial.field_342', 'vial.field_343', 
+    'vial.date_modified', 'vial.mat_type', 'vial.study_id', 'vial.volume', 'vial.field_345', 'vial.field_342', 'vial.field_343', 
     'vial.field_344', 'vial.field_348', 'vial.field_339', 'vial.field_397', 'vial.field_398', 'vial.field_399', 
-    'vial.field_356', 'vial.field_366']},
+    'vial.field_356', 'vial.field_366', 'vial.field_336']},
     {'table': 'sample', 'fields': ['sample.date_last_modified', 'sample.tumor_type']},
     {'table': 'subject', 'fields': ['subject.subject_id', 'subject.date_last_modified']},
     {'table': 'subject_8', 'fields': ['subject_8.field_14', 'subject_8.field_9', 'subject_8.field_16', 
@@ -115,6 +116,6 @@ config.vials.fieldNameMap = {'vail.study_id': 'studyCode', 'vial.date_modified':
     'sample.date_last_modified': 'sampleLastModified', 'subject.date_last_modified': 'subjectLastModified', 
     'vial.field_342': 'concentrationByNanodropNgL', 'vial.field_339': 'concentrationByQubitNgL', 
     'vial.field_343': '260280', 'vial.field_344': '260230', 'vial.parent_id': 'parentIds', 
-    'vial.study_id': 'studyCode'};
+    'vial.study_id': 'studyCode', 'vial.field_336': 'cellCount'};
 
 module.exports = config;

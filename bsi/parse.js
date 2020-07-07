@@ -294,9 +294,9 @@ const bsiParseModule = (() => {
                 specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
                 aliquotID: "",
                 analyteID: vial.bsiId,
-                processingDate: vial.dateEntered,
+                processingDate: new Date(vial.dateEntered.replace(' ', 'T')).toISOString(),
                 materialType: vial.materialType,
-                volume: vial.initialVolume ? parseFloat(vial.initialVolume) : null,
+                volume: vial.volume ? parseFloat(vial.volume) : null,
                 volumeUnit: "mg"
             }
         },
@@ -308,7 +308,7 @@ const bsiParseModule = (() => {
                 analyteID: vial.bsiId,
                 processingDate: "",
                 materialType: vial.materialType,
-                volume: vial.field_336 ? parseFloat(vial.field_336) : null,
+                volume: vial.cellCount ? parseFloat(vial.cellCount) : null,
                 volumeUnit: "x10^6"
             }
         }
