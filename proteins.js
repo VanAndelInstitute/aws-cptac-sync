@@ -21,7 +21,7 @@ var proteinsModule = (() => {
             getCdrSecrets().then(data => {
                 var secrets = JSON.parse(data.SecretString);
                 request({
-                    uri: process.env.CDR_BASE_URL + 'proteinEvent/' + protiens.caseId,
+                    uri: process.env.CDR_BASE_URL + 'proteinEvent/',
                     method: 'POST',
                     body: protiens,
                     json: true,
