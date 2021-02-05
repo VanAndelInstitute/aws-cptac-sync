@@ -187,7 +187,7 @@ const bsiParseModule = (() => {
 
         buildRna: (vial) => {
             return {
-                specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
+                specimenIDs: vial.rootSpecimens.filter((value, index, self) => self.indexOf(value) === index).map(root => ({specimenID: root})),
                 analyteID: vial.bsiId,
                 dateOfExtraction: vial.dateEntered,
                 volume: vial.initialVolume ? parseFloat(vial.initialVolume) : null,
@@ -195,14 +195,14 @@ const bsiParseModule = (() => {
                 nanoDrop: {
                     concentration: vial.concentrationByNanodropNgL ? parseFloat(vial.concentrationByNanodropNgL) : null,
                     a260OverA280: vial['260280'] ? parseFloat(vial['260280']) : null,
-                    a260OverA230: vial['260280'] ? parseFloat(vial['260230']) : null
+                    a260OverA230: vial['260230'] ? parseFloat(vial['260230']) : null
                 }
             }
         },
 
         buildDna: (vial) => {
             return {
-                specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
+                specimenIDs: vial.rootSpecimens.filter((value, index, self) => self.indexOf(value) === index).map(root => ({specimenID: root})),
                 analyteID: vial.bsiId,
                 dateOfExtraction: vial.dateEntered,
                 volume: vial.initialVolume ? parseFloat(vial.initialVolume) : null,
@@ -265,6 +265,7 @@ const bsiParseModule = (() => {
                         }
                     }
                 });
+                console.log(protein);
                 
                 return protein;
             }
@@ -291,21 +292,21 @@ const bsiParseModule = (() => {
 
         buildProtein: (vial) => {
             return {
-                specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
+                specimenIDs: vial.rootSpecimens.filter((value, index, self) => self.indexOf(value) === index).map(root => ({specimenID: root})),
                 aliquotID: "",
-                analyteID: vial.bsiId,
+                analyteID: vial.currentLabel,
                 processingDate: new Date(vial.dateEntered.replace(' ', 'T')).toISOString(),
                 materialType: vial.materialType,
                 volume: vial.volume ? parseFloat(vial.volume) : null,
-                volumeUnit: "mg"
+                volumeUnit: vial.volumeUnit
             }
         },
 
         buildAmlProtein: (vial) => {
             return {
-                specimenIDs: vial.rootSpecimens.map(root => ({specimenID: root})),
+                specimenIDs: vial.rootSpecimens.filter((value, index, self) => self.indexOf(value) === index).map(root => ({specimenID: root})),
                 aliquotID: "",
-                analyteID: vial.bsiId,
+                analyteID: vial.currentLabel,
                 processingDate: "",
                 materialType: vial.materialType,
                 volume: vial.cellCount ? parseFloat(vial.cellCount) : null,
@@ -493,12 +494,14 @@ const bsiParseModule = (() => {
 
         proteins: {
             parseReport: (results) => {
-                Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
-                .then(async (reports) => {
-                    var vials = reports[0];
-                    vials = await cases.vials.buildLineage(vials, reports[1]);
-                    var protien = proteins.build(vials);
-                    resolve(protien);
+                return new Promise((resolve, reject) => {
+                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                    .then(async (reports) => {
+                        var vials = reports[0];
+                        vials = await cases.vials.buildLineage(vials, reports[1]);
+                        var protien = proteins.build(vials);
+                        resolve(protien);
+                    });
                 });
             }
         }

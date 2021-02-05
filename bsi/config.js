@@ -13,6 +13,7 @@ config.uri.vialReport = process.env.BSI_BASE_URL + 'VARI/reports/list?' +
     'display_fields=%2Bvial.mat_type&' +
     'display_fields=%2Bvial.study_id&' +
     'display_fields=%2Bvial.volume&' +
+    'display_fields=%2Bvial.volume_unit&' +
     'display_fields=%2Bvial.field_345&' +
     'display_fields=%2Bvial.field_342&' +
     'display_fields=%2Bvial.field_343&' +
@@ -104,7 +105,7 @@ config.receipts.fieldNameMap = {'shipment.date_modified': 'lastModified'};
 config.vials = {};
 config.vials.Metadata = [
     {'table': 'vial', 'fields': ['vial.bsi_id', 'vial.current_label', 'vial.parent_id', 'vial.date_entered', 
-    'vial.date_modified', 'vial.mat_type', 'vial.study_id', 'vial.volume', 'vial.field_345', 'vial.field_342', 'vial.field_343', 
+    'vial.date_modified', 'vial.mat_type', 'vial.study_id', 'vial.volume', 'vial.volume_unit', 'vial.field_345', 'vial.field_342', 'vial.field_343', 
     'vial.field_344', 'vial.field_348', 'vial.field_339', 'vial.field_397', 'vial.field_398', 'vial.field_399', 
     'vial.field_356', 'vial.field_366', 'vial.field_336']},
     {'table': 'sample', 'fields': ['sample.date_last_modified', 'sample.tumor_type']},

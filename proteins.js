@@ -16,14 +16,14 @@ var proteinsModule = (() => {
         });
     }
     
-    function createCdrRequest(protiens) {
+    function createCdrRequest(proteins) {
         return new Promise((resolve, reject) => {
             getCdrSecrets().then(data => {
                 var secrets = JSON.parse(data.SecretString);
                 request({
                     uri: process.env.CDR_BASE_URL + 'proteinEvent/',
                     method: 'POST',
-                    body: protiens,
+                    body: proteins,
                     json: true,
                     auth: {
                         'user': secrets.username,
@@ -45,14 +45,14 @@ var proteinsModule = (() => {
                 var bsiCases = await bsi.cases.getUpdated(lastUpdated.lastModified);
     
                 for (let index = 0; index < bsiCases.length; index++) {
-                    var protein = await bsi.protiens.get(bsiCases[index]);
+                    var protein = await bsi.proteins.get(bsiCases[index]);
                     if (protein) {
-                        await dynamo.protiens.update(protein);
+                        await dynamo.proteins.update(protein);
                     }
                 }
     
                 await dynamo.updateLatest(lastUpdated);
-                await bsi.logoff();
+                // await bsi.logoff();
                 resolve();
             });
         },
