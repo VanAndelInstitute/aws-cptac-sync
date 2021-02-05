@@ -1,0 +1,17 @@
+Resources:
+  Images:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:service}-${opt:stage, self:provider.stage}-images
+      AttributeDefinitions:
+        - AttributeName: CaseId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: CaseId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      Tags:
+        - Key: costcenter
+          Value: pbc

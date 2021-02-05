@@ -1,0 +1,15 @@
+Resources:
+  ImagesSync:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:service}-${opt:stage, self:provider.stage}-images-sync
+      AttributeDefinitions:
+        - AttributeName: CaseId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: CaseId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: costcenter
+          Value: pbc

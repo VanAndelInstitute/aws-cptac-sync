@@ -257,6 +257,36 @@ var dynamoModule = (() => {
                     Item: syncData
                 }).promise();
             }
+        },
+
+        images: {
+            update: async (imageData) => {
+                return docClient.put({
+                    TableName: process.env.IMAGES,
+                    Item: imageData
+                }).promise();
+            },
+
+            get: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.IMAGES,
+                    Key: { CaseId: caseId }
+                }).promise();
+            },
+
+            getSync: (caseId) => {
+                return docClient.get({
+                    TableName: process.env.IMAGES_SYNC,
+                    Key: { CaseId: caseId }
+                }).promise();
+            },
+
+            updateSync: (syncData) => {
+                return docClient.put({
+                    TableName: process.env.IMAGES_SYNC,
+                    Item: syncData
+                }).promise();
+            }
         }
     };
 })();
