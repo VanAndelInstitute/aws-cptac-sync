@@ -2,57 +2,42 @@
 
 const bsi = require('./bsi/module');
 const dynamo = require('./dynamo/module');
-const request = require('request');
-const AWS = require('aws-sdk');
+const got = require('got');
+const { SecretsManager } = require("@aws-sdk/client-secrets-manager");
 
-const secretClient = new AWS.SecretsManager();
+const secretClient = new SecretsManager();
 
 var molecularqcsModule = (() => {
-    function getCdrSecrets() {
-        return new Promise((resolve, reject) => {
-            secretClient.getSecretValue({SecretId: process.env.CDR_SECRET}, (err, data) => {
-                err ? reject(err) : resolve(data);
-            });
-        });
+    async function getCdrSecrets() {
+        return secretClient.getSecretValue({SecretId: process.env.CDR_SECRET});
     }
     
-    function createCdrRequest(molecularqc) {
-        return new Promise((resolve, reject) => {
-            getCdrSecrets().then(data => {
-                var secrets = JSON.parse(data.SecretString);
-                request({
-                    uri: process.env.CDR_BASE_URL + 'molecularQCEvent/' + molecularqc.caseId,
-                    method: 'POST',
-                    body: molecularqc,
-                    json: true,
-                    auth: {
-                        'user': secrets.username,
-                        'pass': secrets.password
-                    }
-                }, async (error, response, body) => {
-                    resolve(response.statusCode);
-                });
-            });
+    async function createCdrRequest(molecularqc) {
+        let data = await getCdrSecrets();
+        var secrets = JSON.parse(data.SecretString);
+        const url = process.env.CDR_BASE_URL + 'molecularQCEvent/' + molecularqc.caseId;
+        let response = await got.post(url, {
+            json: receipt,
+            username: secrets.username,
+            password: secrets.password
         });
+        return response.statusCode;
     }
 
     return {
         pullRecentChanges: async () => {
-            return new Promise(async (resolve, reject) => {
-                await bsi.login();
-                
-                var lastUpdated = await dynamo.getLatest('Case');
-                var bsiCases = await bsi.cases.getUpdated(lastUpdated.lastModified);
+            await bsi.login();
+            
+            var lastUpdated = await dynamo.getLatest('Case');
+            var bsiCases = await bsi.cases.getUpdated(lastUpdated.lastModified);
 
-                for (let index = 0; index < bsiCases.length; index++) {
-                    var molecularqc = await bsi.molecularqcs.get(bsiCases[index]);
-                    await dynamo.molecularqcs.update(molecularqc);
-                }
+            for (let index = 0; index < bsiCases.length; index++) {
+                var molecularqc = await bsi.molecularqcs.get(bsiCases[index]);
+                await dynamo.molecularqcs.update(molecularqc);
+            }
 
-                await dynamo.updateLatest(lastUpdated);
-                await bsi.logoff();
-                resolve();
-            });
+            await dynamo.updateLatest(lastUpdated);
+            await bsi.logoff();
         },
 
         sync: async (molecularqc) => {

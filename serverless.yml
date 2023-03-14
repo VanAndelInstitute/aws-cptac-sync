@@ -2,10 +2,9 @@ service: cptac-sync
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs18.x
   stage: dev
   region: us-east-2
-  profile: vai
   tags:
     costcenter: pbc
   stackTags:
@@ -16,20 +15,17 @@ provider:
   environment:
     BSI_SECRET: ${opt:stage, self:provider.stage}-bsi-cptac-service
     CDR_SECRET: ${opt:stage, self:provider.stage}-cdr-service
-    VSV_SECRET: vsv-api
-    BSI_BASE_URL: ${self:custom.bsi_base_url.${opt:stage, self:provider.stage}, self.bsi_base_url.dev}
-    CDR_BASE_URL: ${self:custom.cdr_base_url.${opt:stage, self:provider.stage}, self.cdr_base_url.dev}
-    BSI_RECEIPTS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-receipts
-    BSI_RECEIPTS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-receipts-sync
-    BSI_ISCANS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-iscans
-    BSI_ISCANS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-iscans-sync
-    BSI_MOLECULARQCS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-molecularqcs
-    BSI_MOLECULARQCS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-molecularqcs-sync
-    BSI_PROTEINS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-proteins
-    BSI_PROTEINS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-proteins-sync
-    IMAGES: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-images
-    IMAGES_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-images-sync
-    LATEST_RECORD: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-latest-record
+    BSI_BASE_URL: ${self:custom.bsi_base_url.${opt:stage, self:provider.stage}, self:bsi_base_url.dev}
+    CDR_BASE_URL: ${self:custom.cdr_base_url.${opt:stage, self:provider.stage}, self:cdr_base_url.dev}
+    BSI_RECEIPTS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-receipts
+    BSI_RECEIPTS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-receipts-sync
+    BSI_ISCANS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-iscans
+    BSI_ISCANS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-iscans-sync
+    BSI_MOLECULARQCS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-molecularqcs
+    BSI_MOLECULARQCS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-molecularqcs-sync
+    BSI_PROTEINS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-proteins
+    BSI_PROTEINS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-proteins-sync
+    LATEST_RECORD: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-latest-record
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -41,10 +37,6 @@ provider:
       Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:*:secret:${opt:stage, self:provider.stage}-cdr-service-*'
     - Effect: Allow
       Action:
-        - secretsmanager:GetSecretValue
-      Resource: 'arn:aws:secretsmanager:us-east-2:639677452477:secret:vsv-api-DlhtmE'
-    - Effect: Allow
-      Action:
         - dynamodb:ListStreams
         - dynamodb:DescribeTable
         - dynamodb:Query
@@ -53,7 +45,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.table_prefix.${opt:stage, self:provider.stage}, self.table_prefix.dev}-*"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-*"
 package:
   exclude:
     - client/**
@@ -71,7 +63,7 @@ functions:
         threshold: 7
         period: 10800
     events:
-      - name: ${self:custom.service_prefix.${opt:stage, self:provider.stage}, self.service_prefix.dev}-iscan-timer
+      - name: ${self:custom.service_prefix.${opt:stage, self:provider.stage}, self:service_prefix.dev}-iscan-timer
       - schedule: cron(0 10-23 * * ? *)
   # Stream Subscriptions
   sync-receipt:
@@ -405,74 +397,6 @@ functions:
          async: true
          cors: true
          authorizer: aws_iam
-  # Image API
-  get-image:
-    handler: handlers.getimage
-    timeout: 30
-    memorySize: 256
-    events:
-      - http:
-          path: image/{id}
-          method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
-  get-image-sync:
-    handler: handlers.getimagesync
-    timeout: 30
-    memorySize: 256
-    events:
-      - http:
-          path: imagesync/{id}
-          method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
-  rebuild-image:
-    handler: handlers.rebuildimage
-    timeout: 30
-    memorySize: 256
-    events:
-      - http:
-          path: image/{id}
-          method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
-  resync-image:
-    handler: handlers.resyncimage
-    timeout: 30
-    memorySize: 256
-    events:
-      - http:
-          path: imagesync/{id}
-          method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
-  pull-recent-images:
-    handler: handlers.pullrecentimages
-    timeout: 600
-    memorySize: 256
-    events:
-      - http:
-         path: pullimages
-         method: put
-         async: true
-         cors: true
-         authorizer: aws_iam
 
 resources:
   # DynamoDB
@@ -484,8 +408,6 @@ resources:
   - ${file(sls-resources/dynamodb-iscans-sync.yml)}
   - ${file(sls-resources/dynamodb-proteins.yml)}
   - ${file(sls-resources/dynamodb-proteins-sync.yml)}
-  - ${file(sls-resources/dynamodb-images.yml)}
-  - ${file(sls-resources/dynamodb-images-sync.yml)}
   - ${file(sls-resources/dynamodb-latest-record.yml)}
   # Cognito
   - ${file(sls-resources/cognito-user-pool.yml)}
@@ -515,7 +437,7 @@ custom:
     mirror: ${self:service}-${opt:stage, self:provider.stage}
     dev: ${self:service}-${opt:stage, self:provider.stage}
   client:
-    bucketName: ${self:service}-${opt:stage, self:provider.stage}.aws.vai.org
+    bucketName: ${self:service}-${opt:stage, self:provider.stage}
     distributionFolder: client/build
     errorDocument: index.html
   alerts:

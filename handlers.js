@@ -8,8 +8,12 @@ const proteins = require('./proteins');
 const images = require('./images');
 
 module.exports.pullrecentchanges = async (event, context) => {
-    await shipmentReceipts.pullRecentChanges();
-    await bsiCase.pullRecentChanges();
+    try {
+        await shipmentReceipts.pullRecentChanges();
+        await bsiCase.pullRecentChanges();
+    } catch(error) {
+        console.error('Error pulling changes from BSI:', error);
+    }
 };
 
 // Shipment Receipts
@@ -301,75 +305,3 @@ module.exports.resyncprotein = async (event, context) => {
     };
 };
 
-// Images
-
-module.exports.pullrecentimages = async (event, context) => {
-    await images.pullRecentChanges();
-};
-
-module.exports.syncimage = (event, context) => {
-    // event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
-    //     images.sync(images.dynamoToJson(record.dynamodb.NewImage));
-    // });
-};
-
-module.exports.getimage = async (event, context) => {
-    var image = await images.get(event.pathParameters.id);
-    if (Object.entries(image).length === 0 && image.constructor === Object) {
-        return {
-            statusCode: 404,
-            headers: {
-                "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
-                "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
-            },
-            body: "Images for case '" + event.pathParameters.id + "' was not found."
-        };
-    }
-    return {
-        statusCode: 200,
-        headers: {
-            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
-        },
-        body: JSON.stringify({data: image.Item})
-    };
-};
-
-module.exports.getimagesync = async (event, context) => {
-    var sync = await images.getSync(event.pathParameters.id);
-    return {
-        statusCode: 200,
-        headers: {
-            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
-        },
-        body: JSON.stringify({data: sync.Item})
-    };
-};
-
-module.exports.rebuildimage = async (event, context) => {
-    await images.rebuild(event.pathParameters.id);
-    return {
-        statusCode: 200,
-        headers: {
-            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
-        },
-        body: "Images for case id '" + event.pathParameters.id + "' has been successfully rebuilt."
-    };
-};
-
-module.exports.resyncimage = async (event, context) => {
-    console.log(event);
-    var image = await images.get(event.pathParameters.id);
-    console.log("Syncing" + image.Item);
-    await images.sync(image.Item);
-    return {
-        statusCode: 200,
-        headers: {
-            "Access-Control-Allow-Origin" : "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
-        },
-        body: "Images for case id '" + event.pathParameters.id + "' has been successfully resynced."
-    };
-};

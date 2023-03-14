@@ -7,11 +7,10 @@
     "url": "git+https://github.com/VanAndelInstitute/aws-cptac-sync.git"
   },
   "dependencies": {
-    "aws4": "^1.11.0",
     "dateformat": "^3.0.3",
-    "request": "^2.87.0",
-    "serverless-finch": "^2.3.2",
-    "serverless-plugin-aws-alerts": "^1.4.0"
+    "got": "^12.6.0",
+    "serverless-finch": "^4.0.0",
+    "serverless-plugin-aws-alerts": "^1.7.5"
   },
   "bugs": {
     "url": "https://github.com/VanAndelInstitute/aws-cptac-sync/issues"
