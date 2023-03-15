@@ -44,10 +44,11 @@ const bsiParseModule = (() => {
             },
     
             fetchMetadata: async () => {
-                cases.vials.vialMetadata = await Promise.all(
+                let fields = await Promise.all(
                     config.vials.Metadata.map(metadata =>
                         filterMetadata(metadata.table, metadata.fields)
                 ));
+                cases.vials.vialMetadata = [].concat.apply([], fields);
             },
     
             getMetadata: async () => {
@@ -349,10 +350,11 @@ const bsiParseModule = (() => {
         },
 
         fetchMetadata: async () => {
-            receipts.receiptMetadata = await Promise.all(
+            let fields = await Promise.all(
                 config.receipts.Metadata.map(metadata =>
                     filterMetadata(metadata.table, metadata.fields)
             ));
+            receipts.receiptMetadata = [].concat.apply([], fields);
         },
 
         getMetadata: async () => {
