@@ -4,6 +4,8 @@ import config from './config.js';
 import got from 'got';
 import dateformat from 'dateformat';
 import { SecretsManager } from '@aws-sdk/client-secrets-manager';
+import https from 'node:https';
+import crypto from 'node:crypto';
 
 const secretClient = new SecretsManager();
 
@@ -16,9 +18,12 @@ const bsiRequestModule = (() => {
 
     async function createBsiRequest(uri) {
         return got(uri, {
-            headers: {
-                'BSI-SESSION-ID': sessionId
-            }
+            headers: { 'BSI-SESSION-ID': sessionId },
+            agent: {
+                https: new https.Agent({
+                    secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT,
+                }),
+            },
         }).json();
     }
 
@@ -26,7 +31,12 @@ const bsiRequestModule = (() => {
         login: async () => {
             let secrets = await getBsiSecrets();
             let response = await got.post(config.uri.login, {
-                form: JSON.parse(secrets.SecretString)
+                form: JSON.parse(secrets.SecretString),
+                agent: {
+                    https: new https.Agent({
+                        secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT,
+                    }),
+                },
             });
             sessionId = response.body;
         },
@@ -37,7 +47,12 @@ const bsiRequestModule = (() => {
 
         logoff: async () => {
             return got.post(config.uri.logoff, {
-                headers: { "BSI-SESSION-ID": sessionId }
+                headers: { "BSI-SESSION-ID": sessionId },
+                agent: {
+                    https: new https.Agent({
+                        secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT,
+                    }),
+                },
             });
         },
 
