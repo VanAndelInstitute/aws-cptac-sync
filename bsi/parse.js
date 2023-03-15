@@ -1,7 +1,7 @@
 'use strict';
 
-const config = require('./config');
-const bsiRequest = require('./request');
+import config from './config.js';
+import bsiRequest from './request.js';
 
 const bsiParseModule = (() => {
     function camelize(str) {
@@ -478,4 +478,4 @@ const bsiParseModule = (() => {
     };
 })();
 
-module.exports = bsiParseModule;
+export default bsiParseModule;

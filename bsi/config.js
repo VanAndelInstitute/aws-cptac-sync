@@ -119,4 +119,4 @@ config.vials.fieldNameMap = {'vail.study_id': 'studyCode', 'vial.date_modified':
     'vial.field_343': '260280', 'vial.field_344': '260230', 'vial.parent_id': 'parentIds', 
     'vial.study_id': 'studyCode', 'vial.field_336': 'cellCount'};
 
-module.exports = config;
+export default config;

@@ -1,13 +1,12 @@
 'use strict';
 
-const shipmentReceipts = require('./shipment-receipts');
-const bsiCase = require('./bsi-case');
-const molecularqcs = require('./molecularqcs');
-const iscans = require('./iscans');
-const proteins = require('./proteins');
-const images = require('./images');
+import shipmentReceipts from './shipment-receipts.js';
+import bsiCase from './bsi-case.js';
+import molecularqcs from './molecularqcs.js';
+import iscans from './iscans.js';
+import proteins from './proteins.js';
 
-module.exports.pullrecentchanges = async (event, context) => {
+export const pullrecentchanges = async (event, context) => {
     try {
         await shipmentReceipts.pullRecentChanges();
         await bsiCase.pullRecentChanges();
@@ -18,11 +17,11 @@ module.exports.pullrecentchanges = async (event, context) => {
 
 // Shipment Receipts
 
-module.exports.pullrecentreceipts = async (event, context) => {
+export const pullrecentreceipts = async (event, context) => {
     await shipmentReceipts.pullRecentChanges();
 };
 
-module.exports.rebuildreceipt = async (event, context) => {
+export const rebuildreceipt = async (event, context) => {
     await shipmentReceipts.rebuild(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -34,7 +33,7 @@ module.exports.rebuildreceipt = async (event, context) => {
     };
 };
 
-module.exports.resyncreceipt = async (event, context) => {
+export const resyncreceipt = async (event, context) => {
     var receipt = await shipmentReceipts.get(event.pathParameters.id);
     await shipmentReceipts.sync(receipt.Item);
     return {
@@ -47,13 +46,13 @@ module.exports.resyncreceipt = async (event, context) => {
     };
 };
 
-module.exports.syncreceipt = (event, context) => {
+export const syncreceipt = (event, context) => {
     event.Records.filter(record => record.eventName != 'REMOVE').map(async record => {
         await shipmentReceipts.sync(shipmentReceipts.dynamoToJson(record.dynamodb.NewImage));
     });
-}
+};
 
-module.exports.getreceipt = async (event, context) => {
+export const getreceipt = async (event, context) => {
     var receipt = await shipmentReceipts.get(event.pathParameters.id);
     if (Object.entries(receipt).length === 0 && receipt.constructor === Object) {
         return {
@@ -75,7 +74,7 @@ module.exports.getreceipt = async (event, context) => {
     };
 };
 
-module.exports.getreceiptsync = async (event, context) => {
+export const getreceiptsync = async (event, context) => {
     var sync = await shipmentReceipts.getSync(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -88,23 +87,23 @@ module.exports.getreceiptsync = async (event, context) => {
 };
 
 // Cases
-module.exports.rebuildcase = (event, context) => {
+export const rebuildcase = (event, context) => {
     bsiCase.rebuild(event.pathParameters.id);
 };
 
 // Molecular QC
 
-module.exports.pullrecentmolecularqcs = async (event, context) => {
+export const pullrecentmolecularqcs = async (event, context) => {
     await molecularqcs.pullRecentChanges();
 };
 
-module.exports.syncmolecularqc = (event, context) => {
+export const syncmolecularqc = (event, context) => {
     event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
         molecularqcs.sync(molecularqcs.dynamoToJson(record.dynamodb.NewImage));
     });
 };
 
-module.exports.getmolecularqc = async (event, context) => {
+export const getmolecularqc = async (event, context) => {
     var molecularqc = await molecularqcs.get(event.pathParameters.id);
     if (Object.entries(molecularqc).length === 0 && molecularqc.constructor === Object) {
         return {
@@ -126,7 +125,7 @@ module.exports.getmolecularqc = async (event, context) => {
     };
 };
 
-module.exports.getmolecularqcsync = async (event, context) => {
+export const getmolecularqcsync = async (event, context) => {
     var sync = await molecularqcs.getSync(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -138,7 +137,7 @@ module.exports.getmolecularqcsync = async (event, context) => {
     };
 };
 
-module.exports.rebuildmolecularqc = async (event, context) => {
+export const rebuildmolecularqc = async (event, context) => {
     await molecularqcs.rebuild(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -150,7 +149,7 @@ module.exports.rebuildmolecularqc = async (event, context) => {
     };
 };
 
-module.exports.resyncmolecularqc = async (event, context) => {
+export const resyncmolecularqc = async (event, context) => {
     var molecularqc = await molecularqcs.get(event.pathParameters.id);
     await molecularqcs.sync(molecularqc.Item);
     return {
@@ -165,17 +164,17 @@ module.exports.resyncmolecularqc = async (event, context) => {
 
 //IScan
 
-module.exports.pullrecentiscans = async (event, context) => {
+export const pullrecentiscans = async (event, context) => {
     await iscans.pullRecentChanges();
 };
 
-module.exports.synciscan = (event, context) => {
+export const synciscan = (event, context) => {
     event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
         iscans.sync(iscans.dynamoToJson(record.dynamodb.NewImage));
     });
 };
 
-module.exports.getiscan = async (event, context) => {
+export const getiscan = async (event, context) => {
     var iscan = await iscans.get(event.pathParameters.id);
     if (Object.entries(iscan).length === 0 && iscan.constructor === Object) {
         return {
@@ -197,7 +196,7 @@ module.exports.getiscan = async (event, context) => {
     };
 };
 
-module.exports.getiscansync = async (event, context) => {
+export const getiscansync = async (event, context) => {
     var sync = await iscans.getSync(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -209,7 +208,7 @@ module.exports.getiscansync = async (event, context) => {
     };
 };
 
-module.exports.rebuildiscan = async (event, context) => {
+export const rebuildiscan = async (event, context) => {
     await iscans.rebuild(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -221,7 +220,7 @@ module.exports.rebuildiscan = async (event, context) => {
     };
 };
 
-module.exports.resynciscan = async (event, context) => {
+export const resynciscan = async (event, context) => {
     var iscan = await iscans.get(event.pathParameters.id);
     await iscans.sync(iscan.Item);
     return {
@@ -236,17 +235,17 @@ module.exports.resynciscan = async (event, context) => {
 
 // Proteins
 
-module.exports.pullrecentproteins = async (event, context) => {
+export const pullrecentproteins = async (event, context) => {
     await proteins.pullRecentChanges();
 };
 
-module.exports.syncprotein = (event, context) => {
+export const syncprotein = (event, context) => {
     event.Records.filter(record => record.eventName == 'INSERT').map(async record => {
         proteins.sync(proteins.dynamoToJson(record.dynamodb.NewImage));
     });
 };
 
-module.exports.getprotein = async (event, context) => {
+export const getprotein = async (event, context) => {
     var protein = await proteins.get(event.pathParameters.id);
     if (Object.entries(protein).length === 0 && protein.constructor === Object) {
         return {
@@ -268,7 +267,7 @@ module.exports.getprotein = async (event, context) => {
     };
 };
 
-module.exports.getproteinsync = async (event, context) => {
+export const getproteinsync = async (event, context) => {
     var sync = await proteins.getSync(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -280,7 +279,7 @@ module.exports.getproteinsync = async (event, context) => {
     };
 };
 
-module.exports.rebuildprotein = async (event, context) => {
+export const rebuildprotein = async (event, context) => {
     await proteins.rebuild(event.pathParameters.id);
     return {
         statusCode: 200,
@@ -292,7 +291,7 @@ module.exports.rebuildprotein = async (event, context) => {
     };
 };
 
-module.exports.resyncprotein = async (event, context) => {
+export const resyncprotein = async (event, context) => {
     var protein = await proteins.get(event.pathParameters.id);
     await proteins.sync(protein.Item);
     return {

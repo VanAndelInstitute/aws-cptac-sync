@@ -1,7 +1,7 @@
 'use strict';
 
-const bsiRequest = require('./request');
-const bsiParse = require('./parse');
+import bsiRequest from './request.js';
+import bsiParse from './parse.js';
 
 const bsiModule = (() => {
     return {
@@ -58,4 +58,4 @@ const bsiModule = (() => {
     };
 })();
 
-module.exports = bsiModule;
+export default bsiModule;

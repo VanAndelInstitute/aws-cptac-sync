@@ -1,7 +1,7 @@
 'use strict';
 
-const bsi = require('./bsi/module');
-const dynamo = require('./dynamo/module');
+import bsi from './bsi/module.js';
+import dynamo from './dynamo/module.js';
 
 var bsiCaseModule = (() => {
 
@@ -42,4 +42,4 @@ var bsiCaseModule = (() => {
     };
 })();
 
-module.exports = bsiCaseModule;
+export default bsiCaseModule;

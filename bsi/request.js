@@ -1,9 +1,9 @@
 'use strict';
 
-const config = require('./config');
-const got = require('got');
-const dateformat = require('dateformat');
-const { SecretsManager } = require("@aws-sdk/client-secrets-manager");
+import config from './config.js';
+import got from 'got';
+import dateformat from 'dateformat';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 
 const secretClient = new SecretsManager();
 
@@ -83,4 +83,4 @@ const bsiRequestModule = (() => {
     };
 })();
 
-module.exports = bsiRequestModule;
+export default bsiRequestModule;

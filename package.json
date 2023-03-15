@@ -1,6 +1,7 @@
 {
   "name": "aws-cptac-sync",
   "version": "1.0.0",
+  "type": "module",
   "description": "",
   "repository": {
     "type": "git",

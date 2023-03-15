@@ -1,8 +1,8 @@
 'use strict';
 
-const { DynamoDBDocument } = require("@aws-sdk/lib-dynamodb");
-const { DynamoDB } = require("@aws-sdk/client-dynamodb");
-const { unmarshall } = require("@aws-sdk/util-dynamodb");
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 const docClient  = DynamoDBDocument.from(new DynamoDB({ convertEmptyValues: true }));
 
@@ -281,4 +281,4 @@ var dynamoModule = (() => {
     };
 })();
 
-module.exports = dynamoModule;
+export default dynamoModule;

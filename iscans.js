@@ -1,9 +1,9 @@
 'use strict';
 
-const bsi = require('./bsi/module');
-const dynamo = require('./dynamo/module');
-const got = require('got');
-const { SecretsManager } = require("@aws-sdk/client-secrets-manager");
+import bsi from './bsi/module.js';
+import dynamo from './dynamo/module.js';
+import got from 'got';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 
 const secretClient = new SecretsManager();
 
@@ -76,4 +76,4 @@ var iscansModule = (() => {
     };
 })();
 
-module.exports = iscansModule;
+export default iscansModule;
