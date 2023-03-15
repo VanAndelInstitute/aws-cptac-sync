@@ -59,11 +59,11 @@ var iscansModule = (() => {
             return dynamo.toJson(data);
         },
 
-        get: (caseId) => {
+        get: async (caseId) => {
             return dynamo.iscans.get(caseId);
         },
 
-        getSync: (caseId) => {
+        getSync: async (caseId) => {
             return dynamo.iscans.getSync(caseId);
         },
 

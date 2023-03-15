@@ -8,15 +8,15 @@ const docClient  = DynamoDBDocument.from(new DynamoDB({ convertEmptyValues: true
 
 var dynamoModule = (() => {    
     var receipt = {
-        check: (shipmentId, lastModified) => {
-            var receipt = docClient.get({
+        check: async (shipmentId, lastModified) => {
+            var receipt = await docClient.get({
                 TableName: process.env.BSI_RECEIPTS,
                 Key: {
                     'shipmentId': shipmentId
                 },
                 AttributesToGet: ['shipmentId', 'lastModified']
             });
-            if (Object.entries(receipt).length === 0 && receipt.constructor === Object) {
+            if (!receipt.Item) {
                 return shipmentId;
             } else if (receipt.Item.lastModified != lastModified.replace(' ', 'T')) {
                 return shipmentId;
@@ -29,19 +29,19 @@ var dynamoModule = (() => {
             return unmarshall(input, { convertEmptyValues: true });
         },
 
-        getLatest: (topic) => {
-            var lastUpdated = docClient.get({
+        getLatest: async (topic) => {
+            var lastUpdated = await docClient.get({
                 TableName: process.env.LATEST_RECORD,
                 Key: { topic: topic }
             });
-            if (Object.entries(lastUpdated).length === 0 && lastUpdated.constructor === Object) {
+            if (!lastUpdated.Item) {
                 return {topic: topic, lastModified: '02-01-2020 00:00:00.000'};
             } else {
                 return lastUpdated.Item;
             }
         },
 
-        updateLatest: (lastUpdated) => {
+        updateLatest: async (lastUpdated) => {
             return docClient.put({
                 TableName: process.env.LATEST_RECORD,
                 Item: lastUpdated
@@ -57,28 +57,28 @@ var dynamoModule = (() => {
                 return receipts.filter(receipt => receipt);
             },
 
-            update: (shipment) => {
+            update: async (shipment) => {
                 return docClient.put({
                     TableName: process.env.BSI_RECEIPTS,
                     Item: shipment
                 });
             },
 
-            get: (shipmentId) => {
+            get: async (shipmentId) => {
                 return docClient.get({
                     TableName: process.env.BSI_RECEIPTS,
                     Key: { shipmentId: shipmentId }
                 });
             },
 
-            getSync: (shipmentId) => {
+            getSync: async (shipmentId) => {
                 return docClient.get({
                     TableName: process.env.BSI_RECEIPTS_SYNC,
                     Key: { shipmentId: shipmentId }
                 });
             },
 
-            updateSync: (syncData) => {
+            updateSync: async (syncData) => {
                 return docClient.put({
                     TableName: process.env.BSI_RECEIPTS_SYNC,
                     Item: syncData
@@ -158,21 +158,21 @@ var dynamoModule = (() => {
                 // }
             },
 
-            get: (caseId) => {
+            get: async (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_MOLECULARQCS,
                     Key: { caseId: caseId }
                 });
             },
 
-            getSync: (caseId) => {
+            getSync: async (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_MOLECULARQCS_SYNC,
                     Key: { caseId: caseId }
                 });
             },
 
-            updateSync: (syncData) => {
+            updateSync: async (syncData) => {
                 return docClient.put({
                     TableName: process.env.BSI_MOLECULARQCS_SYNC,
                     Item: syncData
@@ -197,21 +197,21 @@ var dynamoModule = (() => {
                 //}
             },
 
-            get: (caseId) => {
+            get: async (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_ISCANS,
                     Key: { caseId: caseId }
                 });
             },
 
-            getSync: (caseId) => {
+            getSync: async (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_ISCANS_SYNC,
                     Key: { caseId: caseId }
                 });
             },
 
-            updateSync: (syncData) => {
+            updateSync: async (syncData) => {
                 return docClient.put({
                     TableName: process.env.BSI_ISCANS_SYNC,
                     Item: syncData
@@ -227,57 +227,27 @@ var dynamoModule = (() => {
                 });
             },
 
-            get: (caseId) => {
+            get: async (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_PROTEINS,
                     Key: { caseId: caseId }
                 });
             },
 
-            getSync: (caseId) => {
+            getSync: async (caseId) => {
                 return docClient.get({
                     TableName: process.env.BSI_PROTEINS_SYNC,
                     Key: { caseId: caseId }
                 });
             },
 
-            updateSync: (syncData) => {
+            updateSync: async (syncData) => {
                 return docClient.put({
                     TableName: process.env.BSI_PROTEINS_SYNC,
                     Item: syncData
                 });
             }
         },
-
-        images: {
-            update: async (imageData) => {
-                return docClient.put({
-                    TableName: process.env.IMAGES,
-                    Item: imageData
-                });
-            },
-
-            get: (caseId) => {
-                return docClient.get({
-                    TableName: process.env.IMAGES,
-                    Key: { CaseId: caseId }
-                });
-            },
-
-            getSync: (caseId) => {
-                return docClient.get({
-                    TableName: process.env.IMAGES_SYNC,
-                    Key: { CaseId: caseId }
-                });
-            },
-
-            updateSync: (syncData) => {
-                return docClient.put({
-                    TableName: process.env.IMAGES_SYNC,
-                    Item: syncData
-                });
-            }
-        }
     };
 })();
 

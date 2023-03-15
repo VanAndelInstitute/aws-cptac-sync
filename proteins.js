@@ -61,11 +61,11 @@ var proteinsModule = (() => {
             return dynamo.toJson(data);
         },
 
-        get: (caseId) => {
+        get: async (caseId) => {
             return dynamo.proteins.get(caseId);
         },
 
-        getSync: (caseId) => {
+        getSync: async (caseId) => {
             return dynamo.proteins.getSync(caseId);
         },
 

@@ -59,11 +59,11 @@ var molecularqcsModule = (() => {
             return dynamo.toJson(data);
         },
 
-        get: (caseId) => {
+        get: async (caseId) => {
             return dynamo.molecularqcs.get(caseId);
         },
 
-        getSync: (caseId) => {
+        getSync: async (caseId) => {
             return dynamo.molecularqcs.getSync(caseId);
         },
 

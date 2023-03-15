@@ -69,11 +69,11 @@ var receiptModule = (() => {
             });
         },
 
-        get: (shipmentId) => {
+        get: async (shipmentId) => {
             return dynamo.receipts.get(shipmentId);
         },
 
-        getSync: (shipmentId) => {
+        getSync: async (shipmentId) => {
             return dynamo.receipts.getSync(shipmentId);
         }
     };
