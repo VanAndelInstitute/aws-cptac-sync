@@ -437,7 +437,7 @@ custom:
     mirror: ${self:service}-${opt:stage, self:provider.stage}
     dev: ${self:service}-${opt:stage, self:provider.stage}
   client:
-    bucketName: ${self:service}-${opt:stage, self:provider.stage}
+    bucketName: ${self:service}-${opt:stage, self:provider.stage}.aws.vai.org
     distributionFolder: client/build
     errorDocument: index.html
   alerts:
