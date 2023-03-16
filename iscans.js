@@ -17,7 +17,7 @@ var iscansModule = (() => {
         var secrets = JSON.parse(data.SecretString);
         const url = process.env.CDR_BASE_URL + 'iscanEvent/' + iscan.caseId;
         let response = await got.post(url, {
-            json: receipt,
+            json: iscan,
             username: secrets.username,
             password: secrets.password
         });

@@ -17,7 +17,7 @@ var molecularqcsModule = (() => {
         var secrets = JSON.parse(data.SecretString);
         const url = process.env.CDR_BASE_URL + 'molecularQCEvent/' + molecularqc.caseId;
         let response = await got.post(url, {
-            json: receipt,
+            json: molecularqc,
             username: secrets.username,
             password: secrets.password
         });

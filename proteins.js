@@ -17,7 +17,7 @@ var proteinsModule = (() => {
         var secrets = JSON.parse(data.SecretString);
         const url = process.env.CDR_BASE_URL + 'proteinEvent/';
         let response = await got.post(url, {
-            json: receipt,
+            json: proteins,
             username: secrets.username,
             password: secrets.password
         });
