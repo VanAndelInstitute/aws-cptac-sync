@@ -60,7 +60,6 @@ class App extends Component {
                 <Nav.Link href="/molecularqcs">Molecular QCs</Nav.Link>
                 <Nav.Link href="/iscans">iScans</Nav.Link>
                 <Nav.Link href="/proteins">Proteins</Nav.Link>
-                <Nav.Link href="/images">Images</Nav.Link>
               </Nav>
             ) : (
               <Nav className="mr-auto">
