@@ -19,7 +19,8 @@ var iscansModule = (() => {
         let response = await got.post(url, {
             json: iscan,
             username: secrets.username,
-            password: secrets.password
+            password: secrets.password,
+            throwHttpErrors: false,
         });
         return response.statusCode;
     }

@@ -19,7 +19,8 @@ var molecularqcsModule = (() => {
         let response = await got.post(url, {
             json: molecularqc,
             username: secrets.username,
-            password: secrets.password
+            password: secrets.password,
+            throwHttpErrors: false,
         });
         return response.statusCode;
     }
