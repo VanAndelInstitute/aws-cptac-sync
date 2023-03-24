@@ -31,7 +31,7 @@ export default class IScans extends Component {
 
   async handleReload(event) {
     event.preventDefault();
-    API.put('api', '/pulliscans/');
+    API.put('api', '/pullrecent/iscan');
     alert('Getting all recent iscan data from BSI. This may take a few minutes to complete.');
   }
 
