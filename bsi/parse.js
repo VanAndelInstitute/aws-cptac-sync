@@ -1,7 +1,7 @@
 'use strict';
 
-const config = require('./config');
-const bsiRequest = require('./request');
+import config from './config.js';
+import bsiRequest from './request.js';
 
 const bsiParseModule = (() => {
     function camelize(str) {
@@ -10,17 +10,13 @@ const bsiParseModule = (() => {
         }).replace(/\s+/g, '');
     }
 
-    function filterMetadata(table, fieldsToFilter) {
-        return new Promise((resolve, reject) => {
-            bsiRequest.getTableMetadata(table)
-            .then(fields => {
-                var sortedMetadata = [];
-                fieldsToFilter.forEach(filterField => {
-                    sortedMetadata.push(fields.find(field => filterField == field.name));
-                });
-                resolve(sortedMetadata);
-            });
+    async function filterMetadata(table, fieldsToFilter) {
+        var fields = await bsiRequest.getTableMetadata(table)
+        var sortedMetadata = [];
+        fieldsToFilter.forEach(filterField => {
+            sortedMetadata.push(fields.find(field => filterField == field.name));
         });
+        return sortedMetadata;
     }
 
     var cases = {
@@ -47,14 +43,12 @@ const bsiParseModule = (() => {
                 }
             },
     
-            fetchMetadata: () => {
-                var promises = []
-                config.vials.Metadata.forEach(metadata => {
-                    promises.push(filterMetadata(metadata.table, metadata.fields))
-                });
-                return Promise.all(promises).then(fields => {
-                    cases.vials.vialMetadata = [].concat.apply([], fields);
-                });
+            fetchMetadata: async () => {
+                let fields = await Promise.all(
+                    config.vials.Metadata.map(metadata =>
+                        filterMetadata(metadata.table, metadata.fields)
+                ));
+                cases.vials.vialMetadata = [].concat.apply([], fields);
             },
     
             getMetadata: async () => {
@@ -66,62 +60,56 @@ const bsiParseModule = (() => {
 
             parse: async (results) => {
                 var metadata = await cases.vials.getMetadata();
-                return new Promise((resolve, reject) => {
-                    var parsedResults = [];
+                var parsedResults = [];
+                for (var i = 0; i < results.headers.length; i++) {
+                    if (config.vials.fieldNameMap[metadata[i].name] != undefined) {
+                        results.headers[i] = config.vials.fieldNameMap[metadata[i].name];
+                    } else {
+                        results.headers[i] = camelize(results.headers[i]);
+                    }
+                };
+                results.rows.forEach(row => {
+                    var value = {};
                     for (var i = 0; i < results.headers.length; i++) {
-                        if (config.vials.fieldNameMap[metadata[i].name] != undefined) {
-                            results.headers[i] = config.vials.fieldNameMap[metadata[i].name];
-                        } else {
-                            results.headers[i] = camelize(results.headers[i]);
-                        }
-                    };
-                    results.rows.forEach(row => {
-                        var value = {};
-                        for (var i = 0; i < results.headers.length; i++) {
-                            value[results.headers[i]] = cases.vials.parseValue(row[i], metadata[i]);
-                        }
-                        parsedResults.push(value);
-                    });
-                    resolve(parsedResults);
+                        value[results.headers[i]] = cases.vials.parseValue(row[i], metadata[i]);
+                    }
+                    parsedResults.push(value);
                 });
+                return parsedResults;
             },
 
             buildLineage: (vials, pooledVials) => {
-                return new Promise((resolve, reject) => {
-                    vials.forEach(vial => {
-                        vial.rootSpecimens = [];
-                        if (pooledVials.find(pool => pool.id == vial.bsiId)) {
-                            vial.parentIds = pooledVials.find(pool => pool.id == vial.bsiId).parentIds;
-                        }
-                        if (vial.parentIds.length == 0) {
-                            vial.rootSpecimens.push(vial.currentLabel);
-                        }
-                        else {
-                            vial.parentIds.forEach(parent => {
-                                vials.find(root => root.bsiId == parent).rootSpecimens.forEach(root =>
-                                    vial.rootSpecimens.push(root));
-                            });
-                        }
-                    });
-                    resolve(vials);
+                vials.forEach(vial => {
+                    vial.rootSpecimens = [];
+                    if (pooledVials.find(pool => pool.id == vial.bsiId)) {
+                        vial.parentIds = pooledVials.find(pool => pool.id == vial.bsiId).parentIds;
+                    }
+                    if (vial.parentIds.length == 0) {
+                        vial.rootSpecimens.push(vial.currentLabel);
+                    }
+                    else {
+                        vial.parentIds.forEach(parent => {
+                            vials.find(root => root.bsiId == parent).rootSpecimens.forEach(root =>
+                                vial.rootSpecimens.push(root));
+                        });
+                    }
                 });
+                return vials;
             }
         },
 
         pooledTasks: {
             parse: (results) => {
-                return new Promise((resolve, reject) => {
-                    var pooledVials = [];
-                    results.rows.forEach(result => {
-                        if (pooledVials.find(vial => vial.id == result[0])) {
-                            pooledVials.find(vial => vial.id == result[0]).parentIds.push(result[1]);
-                        }
-                        else {
-                            pooledVials.push({id: result[0], parentIds: [result[1]]});
-                        }
-                    });
-                    resolve(pooledVials);
+                var pooledVials = [];
+                results.rows.forEach(result => {
+                    if (pooledVials.find(vial => vial.id == result[0])) {
+                        pooledVials.find(vial => vial.id == result[0]).parentIds.push(result[1]);
+                    }
+                    else {
+                        pooledVials.push({id: result[0], parentIds: [result[1]]});
+                    }
                 });
+                return pooledVials;
             }
         }
     }
@@ -274,8 +262,8 @@ const bsiParseModule = (() => {
             }
         },
 
-        getLastModified: (protien, vial) => {
-            var lastModified = protien.lastModified;
+        getLastModified: (protein, vial) => {
+            var lastModified = protein.lastModified;
             
             if (lastModified == null || lastModified < vial.lastModified) {
                 lastModified = vial.lastModified;
@@ -361,14 +349,12 @@ const bsiParseModule = (() => {
             }
         },
 
-        fetchMetadata: () => {
-            var promises = []
-            config.receipts.Metadata.forEach(metadata => {
-                promises.push(filterMetadata(metadata.table, metadata.fields))
-            });
-            return Promise.all(promises).then(fields => {
-                receipts.receiptMetadata = [].concat.apply([], fields);
-            });
+        fetchMetadata: async () => {
+            let fields = await Promise.all(
+                config.receipts.Metadata.map(metadata =>
+                    filterMetadata(metadata.table, metadata.fields)
+            ));
+            receipts.receiptMetadata = [].concat.apply([], fields);
         },
 
         getMetadata: async () => {
@@ -380,24 +366,22 @@ const bsiParseModule = (() => {
 
         parse: async (results) => {
             var metadata = await receipts.getMetadata();
-            return new Promise((resolve, reject) => {
-                var parsedResults = [];
+            var parsedResults = [];
+            for (var i = 0; i < results.headers.length; i++) {
+                if (config.receipts.fieldNameMap[metadata[i].name] != undefined) {
+                    results.headers[i] = config.receipts.fieldNameMap[metadata[i].name];
+                } else {
+                    results.headers[i] = camelize(results.headers[i]);
+                }
+            };
+            results.rows.forEach(row => {
+                var value = {};
                 for (var i = 0; i < results.headers.length; i++) {
-                    if (config.receipts.fieldNameMap[metadata[i].name] != undefined) {
-                        results.headers[i] = config.receipts.fieldNameMap[metadata[i].name];
-                    } else {
-                        results.headers[i] = camelize(results.headers[i]);
-                    }
-                };
-                results.rows.forEach(row => {
-                    var value = {};
-                    for (var i = 0; i < results.headers.length; i++) {
-                        value[results.headers[i]] = receipts.parseValue(row[i], metadata[i]);
-                    }
-                    parsedResults.push(value);
-                });
-                resolve(receipts.build(parsedResults));
+                    value[results.headers[i]] = receipts.parseValue(row[i], metadata[i]);
+                }
+                parsedResults.push(value);
             });
+            return receipts.build(parsedResults);
         },
 
         create: () => {
@@ -449,63 +433,51 @@ const bsiParseModule = (() => {
         },
 
         cases: {
-            parseReport: (results) => {
-                return new Promise((resolve, reject) => {
-                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
-                    .then(async (reports) => {
-                        var vials = reports[0];
-                        vials = await cases.vials.buildLineage(vials, reports[1]);
-                        var molecularqc = molecularqcs.build(vials);
-                        var iscan = iscans.build(vials);
-                        var protein = proteins.build(vials);
-                        resolve({molecularqc: molecularqc, iscan: iscan, protein: protein});
-                    });
-                });
+            parseReport: async (results) => {
+                let reports = await Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])]);
+                var vials = reports[0];
+                vials = await cases.vials.buildLineage(vials, reports[1]);
+                var molecularqc = molecularqcs.build(vials);
+                var iscan = iscans.build(vials);
+                var protein = proteins.build(vials);
+                return {
+                    molecularqc: molecularqc,
+                    iscan: iscan,
+                    protein: protein
+                };
             }
         },
 
         molecularqcs : {
-            parseReport: (results) => {
-                return new Promise((resolve, reject) => {
-                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
-                    .then(async (reports) => {
-                        var vials = reports[0];
-                        vials = await cases.vials.buildLineage(vials, reports[1]);
-                        var molecularqc = molecularqcs.build(vials);
-                        resolve(molecularqc);
-                    });
-                });
+            parseReport: async (results) => {
+                let reports = await Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                var vials = reports[0];
+                vials = await cases.vials.buildLineage(vials, reports[1]);
+                var molecularqc = molecularqcs.build(vials);
+                return molecularqc;
             }
         },
 
         iscans: {
-            parseReport: (results) => {
-                return new Promise((resolve, reject) => {
-                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
-                    .then(async (reports) => {
-                        var vials = reports[0];
-                        vials = await cases.vials.buildLineage(vials, reports[1]);
-                        var iscan = iscans.build(vials);
-                        resolve(iscan);
-                    });
-                });
+            parseReport: async (results) => {
+                let reports = await Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                var vials = reports[0];
+                vials = await cases.vials.buildLineage(vials, reports[1]);
+                var iscan = iscans.build(vials);
+                return iscan;
             }
         },
 
         proteins: {
-            parseReport: (results) => {
-                return new Promise((resolve, reject) => {
-                    Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
-                    .then(async (reports) => {
-                        var vials = reports[0];
-                        vials = await cases.vials.buildLineage(vials, reports[1]);
-                        var protien = proteins.build(vials);
-                        resolve(protien);
-                    });
-                });
+            parseReport: async (results) => {
+                let reports = await Promise.all([cases.vials.parse(results[0]), cases.pooledTasks.parse(results[1])])
+                var vials = reports[0];
+                vials = await cases.vials.buildLineage(vials, reports[1]);
+                var protein = proteins.build(vials);
+                return protein;
             }
         }
     };
 })();
 
-module.exports = bsiParseModule;
+export default bsiParseModule;

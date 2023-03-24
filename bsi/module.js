@@ -1,7 +1,7 @@
 'use strict';
 
-const bsiRequest = require('./request');
-const bsiParse = require('./parse');
+import bsiRequest from './request.js';
+import bsiParse from './parse.js';
 
 const bsiModule = (() => {
     return {
@@ -18,11 +18,9 @@ const bsiModule = (() => {
                 return bsiRequest.receipts.getUpdated(lastModified);
             },
 
-            get: (shipmentId) => {
-                return bsiRequest.receipts.get(shipmentId)
-                .then(results => {
-                    return bsiParse.receipts.parseReport(results);
-                });
+            get: async (shipmentId) => {
+                let results = await bsiRequest.receipts.get(shipmentId)
+                return bsiParse.receipts.parseReport(results);
             }
         },
 
@@ -31,41 +29,33 @@ const bsiModule = (() => {
                 return bsiRequest.cases.getUpdated(lastModified);
             },
 
-            get: (caseId) => {
-                return bsiRequest.cases.get(caseId)
-                .then(results => {
-                    return bsiParse.cases.parseReport(results);
-                });
+            get: async (caseId) => {
+                let results = await bsiRequest.cases.get(caseId)
+                return bsiParse.cases.parseReport(results);
             }
         },
 
         molecularqcs: {
-            get: (caseId) => {
-                return bsiRequest.cases.get(caseId)
-                .then(results => {
-                    return bsiParse.molecularqcs.parseReport(results);
-                });
+            get: async (caseId) => {
+                let results = await bsiRequest.cases.get(caseId)
+                return bsiParse.molecularqcs.parseReport(results);
             }
         },
 
         iscans: {
-            get: (caseId) => {
-                return bsiRequest.cases.get(caseId)
-                .then(results => {
-                    return bsiParse.iscans.parseReport(results);
-                });
+            get: async (caseId) => {
+                let results = await bsiRequest.cases.get(caseId)
+                return bsiParse.iscans.parseReport(results);
             }
         },
 
         proteins: {
-            get: (caseId) => {
-                return bsiRequest.cases.get(caseId)
-                .then(results => {
-                    return bsiParse.proteins.parseReport(results);
-                });
+            get: async (caseId) => {
+                let results = await bsiRequest.cases.get(caseId)
+                return bsiParse.proteins.parseReport(results);
             }
         }
     };
 })();
 
-module.exports = bsiModule;
+export default bsiModule;

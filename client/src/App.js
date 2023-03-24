@@ -1,6 +1,6 @@
 // App.js
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
+import { withRouter, NavLink } from 'react-router-dom';
 import { Auth, Hub } from 'aws-amplify';
 import { Nav, Navbar, NavItem } from 'react-bootstrap';
 import Routes from './Routes';
@@ -56,11 +56,10 @@ class App extends Component {
           <Navbar.Collapse id="responsive-navbar-nav">
             {this.state.isDataManager ? (
               <Nav className="mr-auto">
-                <Nav.Link href="/shipmentreceipts">Shipment Receipts</Nav.Link>
-                <Nav.Link href="/molecularqcs">Molecular QCs</Nav.Link>
-                <Nav.Link href="/iscans">iScans</Nav.Link>
-                <Nav.Link href="/proteins">Proteins</Nav.Link>
-                <Nav.Link href="/images">Images</Nav.Link>
+                <Nav.Link as={NavLink} to="/shipmentreceipts">Shipment Receipts</Nav.Link>
+                <Nav.Link as={NavLink} to="/molecularqcs">Molecular QCs</Nav.Link>
+                <Nav.Link as={NavLink} to="/iscans">iScans</Nav.Link>
+                <Nav.Link as={NavLink} to="/proteins">Proteins</Nav.Link>
               </Nav>
             ) : (
               <Nav className="mr-auto">
