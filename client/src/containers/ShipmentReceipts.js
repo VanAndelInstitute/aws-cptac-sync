@@ -32,7 +32,7 @@ export default class ShipmentReceipts extends Component {
 
   async handleReload(event) {
     event.preventDefault();
-    API.put('api', '/pullreceipts/');
+    API.put('api', '/pullrecent/receipts');
     alert('Getting all recent shipment receipts from BSI. This may take a few minutes to complete.');
   }
 
