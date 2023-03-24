@@ -12,29 +12,31 @@ provider:
   deploymentBucket:
     tags:
       costcenter: pbc
+  httpApi:
+      cors: true
   environment:
     BSI_SECRET: ${opt:stage, self:provider.stage}-bsi-cptac-service
     CDR_SECRET: ${opt:stage, self:provider.stage}-cdr-service
     BSI_BASE_URL: ${self:custom.bsi_base_url.${opt:stage, self:provider.stage}, self:bsi_base_url.dev}
     CDR_BASE_URL: ${self:custom.cdr_base_url.${opt:stage, self:provider.stage}, self:cdr_base_url.dev}
-    BSI_RECEIPTS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-receipts
-    BSI_RECEIPTS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-receipts-sync
-    BSI_ISCANS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-iscans
-    BSI_ISCANS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-iscans-sync
-    BSI_MOLECULARQCS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-molecularqcs
-    BSI_MOLECULARQCS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-molecularqcs-sync
-    BSI_PROTEINS: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-proteins
-    BSI_PROTEINS_SYNC: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-proteins-sync
-    LATEST_RECORD: ${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-latest-record
+    BSI_RECEIPTS: ${self:custom.table_prefix}-receipts
+    BSI_RECEIPTS_SYNC: ${self:custom.table_prefix}-receipts-sync
+    BSI_ISCANS: ${self:custom.table_prefix}-iscans
+    BSI_ISCANS_SYNC: ${self:custom.table_prefix}-iscans-sync
+    BSI_MOLECULARQCS: ${self:custom.table_prefix}-molecularqcs
+    BSI_MOLECULARQCS_SYNC: ${self:custom.table_prefix}-molecularqcs-sync
+    BSI_PROTEINS: ${self:custom.table_prefix}-proteins
+    BSI_PROTEINS_SYNC: ${self:custom.table_prefix}-proteins-sync
+    LATEST_RECORD: ${self:custom.table_prefix}-latest-record
   iamRoleStatements:
     - Effect: Allow
       Action:
         - secretsmanager:GetSecretValue
-      Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:*:secret:${opt:stage, self:provider.stage}-bsi-cptac-service-*'
+      Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:${aws:accountId}:secret:${opt:stage, self:provider.stage}-bsi-cptac-service-*'
     - Effect: Allow
       Action:
         - secretsmanager:GetSecretValue
-      Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:*:secret:${opt:stage, self:provider.stage}-cdr-service-*'
+      Resource: 'arn:aws:secretsmanager:${opt:region, self:provider.region}:${aws:accountId}:secret:${opt:stage, self:provider.stage}-cdr-service-*'
     - Effect: Allow
       Action:
         - dynamodb:ListStreams
@@ -45,7 +47,11 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.table_prefix.${opt:stage, self:provider.stage}, self:table_prefix.dev}-*"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:${aws:accountId}:table/${self:custom.table_prefix}-*"
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: 'arn:aws:lambda:${opt:region, self:provider.region}:${aws:accountId}:function:${self:service}-${opt:stage, self:provider.stage}-pull-recent-*'
 package:
   exclude:
     - client/**
@@ -63,8 +69,10 @@ functions:
         threshold: 7
         period: 10800
     events:
-      - name: ${self:custom.service_prefix.${opt:stage, self:provider.stage}, self:service_prefix.dev}-iscan-timer
-      - schedule: cron(0 10-23 * * ? *)
+      - schedule:
+          name: ${self:service}-${opt:stage, self:provider.stage}-iscan-timer
+          rate: cron(0 10-23 * * ? *)
+          enabled: false
   # Stream Subscriptions
   sync-receipt:
     handler: handlers.syncreceipt
@@ -74,7 +82,7 @@ functions:
       - stream:
           type: dynamodb
           batchSize: 1
-          maxiumRetryAttempts: 0
+          maximumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
@@ -88,7 +96,7 @@ functions:
       - stream:
           type: dynamodb
           batchSize: 1
-          maxiumRetryAttempts: 0
+          maximumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
@@ -102,7 +110,7 @@ functions:
       - stream:
           type: dynamodb
           batchSize: 1
-          maxiumRetryAttempts: 0
+          maximumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
@@ -116,7 +124,7 @@ functions:
       - stream:
           type: dynamodb
           batchSize: 1
-          maxiumRetryAttempts: 0
+          maximumRetryAttempts: 0
           startingPosition: LATEST
           arn:
             Fn::GetAtt:
@@ -125,278 +133,193 @@ functions:
   # Shipment Receipts API
   get-receipt:
     handler: handlers.getreceipt
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: receipt/{id}
+      - httpApi:
+          path: /receipt/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   get-receipt-sync:
     handler: handlers.getreceiptsync
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: receiptsync/{id}
+      - httpApi:
+          path: /receiptsync/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   rebuild-receipt:
     handler: handlers.rebuildreceipt
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: receipt/{id}
+      - httpApi:
+          path: /receipt/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   resync-receipt:
     handler: handlers.resyncreceipt
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: receiptsync/{id}
+      - httpApi:
+          path: /receiptsync/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   pull-recent-receipts:
     handler: handlers.pullrecentreceipts
     memorySize: 256
     timeout: 600
-    environment:
-      BSI_RECEIPTS: ${self:service}-${opt:stage, self:provider.stage}-receipts
-      LATEST_RECORD: ${self:service}-${opt:stage, self:provider.stage}-latest-record
-    events:
-      - http:
-         path: pullreceipts
-         method: put
-         async: true
-         cors: true
-         authorizer: aws_iam
   # IScan API
   get-iscan:
     handler: handlers.getiscan
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: iscan/{id}
+      - httpApi:
+          path: /iscan/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   get-iscan-sync:
     handler: handlers.getiscansync
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: iscansync/{id}
+      - httpApi:
+          path: /iscansync/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   rebuild-iscan:
     handler: handlers.rebuildiscan
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: iscan/{id}
+      - httpApi:
+          path: /iscan/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   resync-iscan:
     handler: handlers.resynciscan
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: iscansync/{id}
+      - httpApi:
+          path: /iscansync/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   pull-recent-iscan:
     handler: handlers.pullrecentiscans
     timeout: 600
     memorySize: 256
-    events:
-      - http:
-         path: pulliscans
-         method: put
-         async: true
-         cors: true
-         authorizer: aws_iam
   # Molecular QC API
   get-molecularqc:
     handler: handlers.getmolecularqc
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: molecularqc/{id}
+      - httpApi:
+          path: /molecularqc/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   get-molecularqc-sync:
     handler: handlers.getmolecularqcsync
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: molecularqcsync/{id}
+      - httpApi:
+          path: /molecularqcsync/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   rebuild-molecularqc:
     handler: handlers.rebuildmolecularqc
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: molecularqc/{id}
+      - httpApi:
+          path: /molecularqc/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   resync-molecularqc:
     handler: handlers.resyncmolecularqc
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: molecularqcsync/{id}
+      - httpApi:
+          path: /molecularqcsync/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   pull-recent-molecularqc:
     handler: handlers.pullrecentmolecularqcs
     timeout: 600
     memorySize: 256
-    events:
-      - http:
-         path: pullmolecularqcs
-         method: put
-         async: true
-         cors: true
-         authorizer: aws_iam
   # Protein API
   get-protein:
     handler: handlers.getprotein
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: protein/{id}
+      - httpApi:
+          path: /protein/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   get-protein-sync:
     handler: handlers.getproteinsync
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: proteinsync/{id}
+      - httpApi:
+          path: /proteinsync/{id}
           method: get
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   rebuild-protein:
     handler: handlers.rebuildprotein
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: protein/{id}
+      - httpApi:
+          path: /protein/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   resync-protein:
     handler: handlers.resyncprotein
-    timeout: 30
+    timeout: 29
     memorySize: 256
     events:
-      - http:
-          path: proteinsync/{id}
+      - httpApi:
+          path: /proteinsync/{id}
           method: put
-          request:
-            parameters:
-              paths:
-                id: true
-          cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: aws_iam
   pull-recent-proteins:
     handler: handlers.pullrecentproteins
     timeout: 600
     memorySize: 256
+  pull-recent-entity-async:
+    handler: handlers.pullrecententityasync
+    timeout: 5
+    memorySize: 256
     events:
-      - http:
-         path: pullproteins
-         method: put
-         async: true
-         cors: true
-         authorizer: aws_iam
+      - httpApi:
+          path: /pullrecent/{entity}
+          method: put
+          authorizer:
+            type: aws_iam
 
 resources:
   # DynamoDB
@@ -428,14 +351,7 @@ custom:
     prod: 'https://cptac3.cancer.gov/cptacdataservices/rest/'
     mirror: 'https://cptac3.cptac.net/cptacdataservices/rest/'
     dev: 'https://cptac3.cptac.net/cptacdataservices/rest/'
-  table_prefix:
-    prod: ${self:service}-${opt:stage, self:provider.stage}
-    mirror: ${self:service}-${opt:stage, self:provider.stage}
-    dev: ${self:service}-${opt:stage, self:provider.stage}
-  service_prefix:
-    prod: ${self:service}-${opt:stage, self:provider.stage}
-    mirror: ${self:service}-${opt:stage, self:provider.stage}
-    dev: ${self:service}-${opt:stage, self:provider.stage}
+  table_prefix: ${self:service}-${opt:stage, self:provider.stage}
   client:
     bucketName: ${self:service}-${opt:stage, self:provider.stage}.vari-cptac.org
     distributionFolder: client/build

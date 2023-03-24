@@ -1,7 +1,7 @@
 export default {
 	apiGateway: {
 		REGION: 'us-east-2',
-		URL: 'https://twcmi5flza.execute-api.us-east-2.amazonaws.com/dev'
+		URL: 'https://twcmi5flza.execute-api.us-east-2.amazonaws.com'
 	},
 	cognito: {
 		REGION: 'us-east-2',
@@ -11,9 +11,9 @@ export default {
 	},
 	oauth: {
 		domain: 'cptac-sync-dev.auth.us-east-2.amazoncognito.com',
-		scope: ['email', 'openid'],
+		scope: ['profile', 'email', 'openid'],
 		redirectSignIn: 'https://cptac-sync-dev.aws.vai.org/',
 		redirectSignOut: 'https://cptac-sync-dev.aws.vai.org/',
-		responseType: 'token' // or token
+		responseType: 'code' // or token
 	}
 };

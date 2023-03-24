@@ -5,6 +5,8 @@ import bsiCase from './bsi-case.js';
 import molecularqcs from './molecularqcs.js';
 import iscans from './iscans.js';
 import proteins from './proteins.js';
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+const lambdaClient = new LambdaClient();
 
 export const pullrecentchanges = async (event, context) => {
     try {
@@ -304,3 +306,10 @@ export const resyncprotein = async (event, context) => {
     };
 };
 
+export const pullrecententityasync = async (event, context) => {
+    const command = new InvokeCommand({
+        FunctionName: context.functionName.replace("entity-async", event.pathParameters.entity),
+        InvocationType: "Event",
+    });
+    await lambdaClient.send(command);
+};
