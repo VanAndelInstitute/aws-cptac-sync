@@ -33,7 +33,7 @@ export default class MolecularQCs extends Component {
 
   async handleReload(event) {
     event.preventDefault();
-    API.put('api', '/pullmolecularqcs/');
+    API.put('api', '/pullrecent/molecularqc');
     alert('Getting all recent molecular qc data from BSI. This may take a few minutes to complete.');
   }
 
