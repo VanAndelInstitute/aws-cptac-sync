@@ -32,7 +32,7 @@ export default class Proteins extends Component {
 
   async handleReload(event) {
     event.preventDefault();
-    API.put('api', '/pullproteins/');
+    API.put('api', '/pullrecent/proteins');
     alert('Getting all recent proteins data from BSI. This may take a few minutes to complete.');
   }
 
