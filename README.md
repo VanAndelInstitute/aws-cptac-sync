@@ -93,17 +93,24 @@ Once deployment is done, replace the RoleMappings IdentityProvider key with the 
 
 1. Open the Cognito User Pool serverless framework created for you
 2. (Optional) Configure Federation
-   - Go to Federation > Identity Providers
+   - Go to Sign-in experience > Federated identity provider sign-in > Add identity provider
       - Select SAML
-      - Provide configuration (I-Team needs to be involved to configure our IdP on our side)
-   - Go to Federation > Attribute Mapping
-      - Map SAML attributes to User Pool Attributes
+      - Provide configuration:
+         - Provider name
+         - metadata document endpoint URL
+         - attribute mappings (e.g., email -> email, name -> name, preferred_username -> email)
 3. Configure App Integration
-   - Go to App Integration > App Client Settings
-      - Enable Identity Providers you want to allow
-      - Configure Sign in and Sign out URLs
-      - Enable the OAuth flows and scopes you want to allow
-   - Go to App Integreation > Domain Name
+   - Go to App integration > App Clients > Create app client
+      - Provide App client settings:
+         - Select Public client
+         - App client name
+      - Provide Hosted UI settings:
+         - Allowed callback URL
+         - Allowed sign-out URL
+         - Identity provider created in step 2
+         - OAuth 2.0 grant types (e.g., Authorization code grant)
+         - OpentID Connect scopes (e.g, Profile, Email, OpenID)
+   - Go to App integreation > Domain
       - Add a domain prefix or bring your own
    - (Optional) Go to UI Customization
       - Upload an image or change any CSS you want to change to the hosted login page
@@ -133,16 +140,22 @@ npm run build
 cd ..
 ```
 
-You can deploy your built react project using serverless finch
-
-Note: This will completely remove any files already out there
-
+Create S3 bucket with bucket owner enforced
 ```
-serverless client deploy
+aws s3api create-bucket --bucket <bucket> --create-bucket-configuration LocationConstraint=<region> --object-ownership BucketOwnerEnforced
+aws s3api put-public-access-block --bucket <bucket> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
+Upload client code
+```
+aws s3 cp client/build s3://<bucket>/ --recursive
+```
+Create CloudFront distribution:
+   - Origin domain: `<bucket>.s3.<region>.amazonaws.com`
+   - Origin access > Origin access control settings > Create control setting
+      - Copy policy, Go to S3 bucket permissions, update \<bucket> Bucket policy
+   - Default root object: `index.html`
 
 ## References
 
 * Serverless documentation (https://serverless.com/framework/docs/providers/aws/)
 * Serverless AWS Alerts documentation (https://github.com/ACloudGuru/serverless-plugin-aws-alerts)
-* Serverless Finch (https://github.com/fernando-mc/serverless-finch)
