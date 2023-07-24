@@ -89,8 +89,15 @@ const bsiParseModule = (() => {
                     }
                     else {
                         vial.parentIds.forEach(parent => {
-                            vials.find(root => root.bsiId == parent).rootSpecimens.forEach(root =>
-                                vial.rootSpecimens.push(root));
+                           if (vials.find(root => root.bsiId == parent) && vials.find(root => root.bsiId == parent).rootSpecimens) {
+                                vials.find(root => root.bsiId == parent).rootSpecimens.forEach(root =>
+                                    vial.rootSpecimens.push(root));
+                           }
+                           else {
+                               console.log("Problem building lineage!");
+                               console.log(vial.bsiId + " assumed root specimen of " + vial.bsiId.split(" ")[0] + " 0000");
+                               vial.rootSpecimens.push(vial.bsiId.split(" ")[0] + " 0000");
+                           }
                         });
                     }
                 });
@@ -135,21 +142,21 @@ const bsiParseModule = (() => {
                 molecularqc.lastModified = molecularqcs.getLastModified(molecularqc, vial);
 
                 if (vial.materialType == 'RNA') {
-                    if (vial.sampleType == 'NAT') {
+                    if (vial.tissueType == 'NAT') {
                         molecularqc.normalRNA.push(molecularqcs.buildRna(vial));
                     }
-                    else if (vial.sampleType == 'Primary') {
+                    else if (vial.tissueType == 'Primary') {
                         molecularqc.tumorRNA.push(molecularqcs.buildRna(vial));
                     }
                 }
                 else if (vial.materialType == 'DNA') {
-                    if (vial.sampleType == 'NAT') {
+                    if (vial.tissueType == 'NAT') {
                         molecularqc.normalDNA.push(molecularqcs.buildDna(vial));
                     }
-                    else if (vial.sampleType == 'Primary') {
+                    else if (vial.tissueType == 'Primary') {
                         molecularqc.tumorDNA.push(molecularqcs.buildDna(vial));
                     }
-                    else if (vial.sampleType == 'Normal') {
+                    else if (vial.tissueType == 'Normal') {
                         molecularqc.germlineDNA.push(molecularqcs.buildDna(vial));
                     }
                 }
@@ -235,7 +242,7 @@ const bsiParseModule = (() => {
                     protein.lastModified = proteins.getLastModified(protein, vial);
     
                     if (vial.materialType != 'DNA' && vial.materialType != 'RNA') {
-                        if (vial.sampleType == 'NAT') {
+                        if (vial.tissueType == 'NAT') {
                             if (vial.materialType == 'Cell Pellet') {
                                 protein.normalProtein.push(proteins.buildAmlProtein(vial));
                             }
@@ -243,7 +250,7 @@ const bsiParseModule = (() => {
                                 protein.normalProtein.push(proteins.buildProtein(vial));
                             }
                         }
-                        else if (vial.sampleType == 'Primary') {
+                        else if (vial.tissueType == 'Primary') {
                             if (vial.materialType == 'Cell Pellet') {
                                 protein.tumorProtein.push(proteins.buildAmlProtein(vial));
                             }
@@ -253,7 +260,6 @@ const bsiParseModule = (() => {
                         }
                     }
                 });
-                console.log(protein);
                 
                 return protein;
             }
