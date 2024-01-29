@@ -142,7 +142,7 @@ const bsiParseModule = (() => {
                 molecularqc.lastModified = molecularqcs.getLastModified(molecularqc, vial);
 
                 if (vial.materialType == 'RNA') {
-                    if (vial.tissueType == 'NAT') {
+                    if (vial.tissueType == 'NAT' || vial.tissueType == 'Adjacent Non-Tumor') {
                         molecularqc.normalRNA.push(molecularqcs.buildRna(vial));
                     }
                     else if (vial.tissueType == 'Primary') {
@@ -150,7 +150,7 @@ const bsiParseModule = (() => {
                     }
                 }
                 else if (vial.materialType == 'DNA') {
-                    if (vial.tissueType == 'NAT') {
+                    if (vial.tissueType == 'NAT' || vial.tissueType == 'Adjacent Non-Tumor') {
                         molecularqc.normalDNA.push(molecularqcs.buildDna(vial));
                     }
                     else if (vial.tissueType == 'Primary') {
@@ -242,7 +242,7 @@ const bsiParseModule = (() => {
                     protein.lastModified = proteins.getLastModified(protein, vial);
     
                     if (vial.materialType != 'DNA' && vial.materialType != 'RNA') {
-                        if (vial.tissueType == 'NAT') {
+                        if (vial.tissueType == 'NAT' || vial.tissueType == 'Adjacent Non-Tumor') {
                             if (vial.materialType == 'Cell Pellet') {
                                 protein.normalProtein.push(proteins.buildAmlProtein(vial));
                             }
