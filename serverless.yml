@@ -416,7 +416,6 @@ resources:
   # TODO: Add www.domain.com redirect to domain.com
 
 plugins:
-  - serverless-finch
   - serverless-plugin-aws-alerts
 
 custom:
